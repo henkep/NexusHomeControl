@@ -10,17 +10,18 @@ var cookieJar = {};
 module.exports = async function (context, req) {
     const username = 'heped1973@gmail.com';
     const password = process.env.TCC_PASSWORD;
-    
+    const debug = req.query.debug === 'true';
+
     cookieJar = {};
 
     try {
         // Step 1: Get initial page
         await makeRequest('GET', '/portal/', '', context);
-        
+
         // Step 2: Login
         var postData = 'timeOffset=300&UserName=' + encodeURIComponent(username) + '&Password=' + encodeURIComponent(password) + '&RememberMe=false';
         var login = await makeRequest('POST', '/portal/', postData, context);
-        
+
         // Step 3: Follow redirects
         if (login.location) {
             var redir = await makeRequest('GET', login.location, '', context);
@@ -28,11 +29,24 @@ module.exports = async function (context, req) {
                 await makeRequest('GET', redir.location, '', context);
             }
         }
-        
+
         // Step 4: Get each thermostat
         var thermostats = [];
+        var debugInfo = [];
+        
         for (var i = 0; i < DEVICES.length; i++) {
             var device = await makeRequest('GET', '/portal/Device/Control/' + DEVICES[i].id, '', context);
+            
+            if (debug) {
+                debugInfo.push({
+                    device: DEVICES[i].name,
+                    status: device.status,
+                    bodyLength: device.body ? device.body.length : 0,
+                    bodySnippet: device.body ? device.body.substring(0, 500) : '',
+                    hasDispTemp: device.body ? device.body.includes('dispTemperature') : false
+                });
+            }
+            
             var data = parseDevicePage(device.body);
             thermostats.push({
                 id: DEVICES[i].id,
@@ -47,23 +61,33 @@ module.exports = async function (context, req) {
             });
         }
 
+        var response = { success: true, thermostats: thermostats };
+        if (debug) {
+            response.debug = {
+                cookies: Object.keys(cookieJar),
+                loginStatus: login.status,
+                loginLocation: login.location,
+                devices: debugInfo
+            };
+        }
+
         context.res = {
             status: 200,
             headers: { 'Access-Control-Allow-Origin': '*' },
-            body: { success: true, thermostats: thermostats }
+            body: response
         };
     } catch (err) {
         context.res = {
             status: 200,
             headers: { 'Access-Control-Allow-Origin': '*' },
-            body: { success: false, error: err.message }
+            body: { success: false, error: err.message, stack: err.stack }
         };
     }
 };
 
 function parseDevicePage(html) {
     var result = {};
-    
+
     var patterns = {
         dispTemperature: /Property\.dispTemperature,\s*([\d.]+)/,
         indoorHumidity: /Property\.indoorHumidity,\s*([\d.]+)/,
@@ -75,17 +99,17 @@ function parseDevicePage(html) {
         statusHeat: /Property\.statusHeat,\s*(\d+)/,
         statusCool: /Property\.statusCool,\s*(\d+)/
     };
-    
+
     for (var key in patterns) {
         var match = html.match(patterns[key]);
         if (match) {
             result[key] = parseFloat(match[1]);
         }
     }
-    
+
     var modes = ['EmHeat', 'Heat', 'Off', 'Cool', 'Auto'];
     result.mode = modes[result.systemSwitchPosition] || 'Unknown';
-    
+
     if (result.statusHeat === 1 || result.statusHeat === 2) {
         result.status = 'Heating';
     } else if (result.statusCool === 1 || result.statusCool === 2) {
@@ -93,14 +117,14 @@ function parseDevicePage(html) {
     } else {
         result.status = 'Idle';
     }
-    
+
     return result;
 }
 
 function makeRequest(method, path, postData, context) {
     return new Promise(function(resolve) {
         var cookieStr = Object.keys(cookieJar).map(function(k) { return k + '=' + cookieJar[k]; }).join('; ');
-        
+
         var options = {
             hostname: 'mytotalconnectcomfort.com',
             path: path,
