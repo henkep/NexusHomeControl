@@ -1748,7 +1748,7 @@
         const THERMOSTAT_API = 'https://nexus-alexa-bridge-45799.azurewebsites.net/api/honeywell-tcc';
         const THERMOSTAT_REFRESH_MS = 60000; // Refresh every minute
         
-        async function fetchThermostats() {
+        async function fetchThermostats(retryCount = 0) {
             const container = document.getElementById('thermostatZones');
             const statusEl = document.getElementById('thermostatStatus');
             
@@ -1756,8 +1756,22 @@
                 const response = await fetch(THERMOSTAT_API);
                 const data = await response.json();
                 
+                // Check if data is incomplete (cold start issue)
                 if (!data.success || !data.thermostats || data.thermostats.length === 0) {
+                    if (retryCount < 2) {
+                        statusEl.textContent = 'Warming up...';
+                        setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                        return;
+                    }
                     container.innerHTML = '<div class="thermostat-loading">Unable to load thermostats</div>';
+                    return;
+                }
+                
+                // Check if we got actual data (not nulls from cold start)
+                const hasValidData = data.thermostats.some(t => t.currentTemp != null);
+                if (!hasValidData && retryCount < 2) {
+                    statusEl.textContent = 'Warming up...';
+                    setTimeout(() => fetchThermostats(retryCount + 1), 3000);
                     return;
                 }
                 
@@ -1811,6 +1825,11 @@
                 
             } catch (err) {
                 console.error('Thermostat error:', err);
+                if (retryCount < 2) {
+                    statusEl.textContent = 'Retrying...';
+                    setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                    return;
+                }
                 container.innerHTML = '<div class="thermostat-loading">Error loading thermostats</div>';
                 statusEl.textContent = 'Offline';
                 statusEl.style.color = 'var(--accent-red)';
