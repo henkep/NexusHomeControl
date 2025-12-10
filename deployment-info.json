@@ -1,0 +1,9 @@
+﻿{
+    "KioskGuide":  "C:\\Users\\Henrik\\Documents\\NexusHomeControl\\guides\\NEXUS-Kiosk-Setup-Guide.pdf",
+    "NegotiateUrl":  "https://nexus-alexa-bridge-45799.azurewebsites.net/api/negotiate",
+    "FunctionAppUrl":  "https://nexus-alexa-bridge-45799.azurewebsites.net",
+    "FrontendUrl":  "https://witty-cliff-0461f7f10.3.azurestaticapps.net",
+    "BroadcastUrl":  "https://nexus-alexa-bridge-45799.azurewebsites.net/api/broadcast",
+    "SignalRConnectionString":  "Endpoint=https://nexus-signalr45799.service.signalr.net;AccessKey=ErbZUelw4CUBmbyjszl42tlaGMXNT2VxlK1L2y402zjMf8mt6N4GJQQJ99BLACYeBjFXJ3w3AAAAASRSto87;Version=1.0;",
+    "WebhookUrl":  "https://nexus-alexa-bridge-45799.azurewebsites.net/api/alexa-webhook?code=yVioQqrThjCl_fYbhVi3t5Uyk1PjoS59FH5JXUsVUld1AzFupyCByA=="
+}

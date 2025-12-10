@@ -1,0 +1,1266 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NEXUS Kiosk Setup Guide</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #1a1a2e;
+            background: #ffffff;
+        }
+        
+        .cover {
+            height: 100vh;
+            background: linear-gradient(135deg, #0a0e17 0%, #1a1a2e 50%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            page-break-after: always;
+        }
+        
+        .cover-logo {
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: 15px;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #00f0ff, #0066ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 60px rgba(0, 240, 255, 0.5);
+        }
+        
+        .cover-subtitle {
+            font-size: 28px;
+            font-weight: 300;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 40px;
+        }
+        
+        .cover-address {
+            font-size: 18px;
+            color: #00f0ff;
+            padding: 15px 30px;
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            border-radius: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .cover-meta {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .page {
+            padding: 60px;
+            min-height: 100vh;
+            page-break-after: always;
+        }
+        
+        .page:last-child {
+            page-break-after: avoid;
+        }
+        
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #0a0e17;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #00f0ff;
+        }
+        
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #16213e;
+            margin: 40px 0 20px 0;
+        }
+        
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 25px 0 15px 0;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+        
+        .intro-box {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f4ff 100%);
+            border-left: 4px solid #00f0ff;
+            padding: 25px;
+            border-radius: 0 12px 12px 0;
+            margin: 30px 0;
+        }
+        
+        .dashboard-url {
+            background: #0a0e17;
+            color: #00f0ff;
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            text-align: center;
+            margin: 20px 0;
+            word-break: break-all;
+        }
+        
+        .tablet-section {
+            background: #fafafa;
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .tablet-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .tablet-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .tablet-icon.fire { background: #ff9900; }
+        .tablet-icon.android { background: #3ddc84; }
+        .tablet-icon.ipad { background: #007aff; }
+        
+        .tablet-title {
+            font-size: 22px;
+            font-weight: 600;
+        }
+        
+        .tablet-subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+        
+        .steps li {
+            position: relative;
+            padding: 20px 20px 20px 70px;
+            margin: 15px 0;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e8e8e8;
+        }
+        
+        .steps li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #00f0ff, #0066ff);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .step-detail {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .code-block {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        .code-block .cmd { color: #00f0ff; }
+        .code-block .param { color: #ffd93d; }
+        .code-block .string { color: #00ff88; }
+        
+        .warning-box {
+            background: #fff8e6;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+        
+        .warning-box::before {
+            content: "âš ï¸ ";
+        }
+        
+        .tip-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+        
+        .tip-box::before {
+            content: "ðŸ’¡ ";
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 12px 0 12px 35px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .checklist li::before {
+            content: "â˜";
+            position: absolute;
+            left: 0;
+            font-size: 20px;
+            color: #00f0ff;
+        }
+        
+        .hardware-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .hardware-table th,
+        .hardware-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .hardware-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        
+        .hardware-table tr:hover {
+            background: #fafafa;
+        }
+        
+        .price { color: #4caf50; font-weight: 600; }
+        
+        .qr-section {
+            text-align: center;
+            padding: 40px;
+            background: #fafafa;
+            border-radius: 16px;
+            margin: 30px 0;
+        }
+        
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border: 2px dashed #ccc;
+            margin: 0 auto 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #999;
+            border-radius: 12px;
+        }
+        
+        .page-number {
+            position: fixed;
+            bottom: 30px;
+            right: 60px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .toc {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .toc li {
+            padding: 15px 0;
+            border-bottom: 1px dotted #ccc;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .toc-title { font-weight: 500; }
+        .toc-page { color: #666; }
+        
+        .footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        @media print {
+            .page { page-break-after: always; }
+            .cover { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cover Page -->
+    <div class="cover">
+        <div class="cover-logo">NEXUS</div>
+        <div class="cover-subtitle">Tablet Kiosk Setup Guide</div>
+        <div class="cover-address">ðŸ“ 332 Bridgegate Dr, Cary, NC 27519</div>
+        <div class="cover-meta">
+            Generated: december 09, 2025<br>
+            Dashboard URL: https://witty-cliff-0461f7f10.3.azurestaticapps.net
+        </div>
+    </div>
+    
+    <!-- Table of Contents -->
+    <div class="page">
+        <h1>Table of Contents</h1>
+        <ul class="toc">
+            <li><span class="toc-title">1. Introduction & Dashboard URL</span><span class="toc-page">3</span></li>
+            <li><span class="toc-title">2. Recommended Hardware</span><span class="toc-page">4</span></li>
+            <li><span class="toc-title">3. Amazon Fire Tablet Setup</span><span class="toc-page">5</span></li>
+            <li><span class="toc-title">4. Android Tablet Setup</span><span class="toc-page">7</span></li>
+            <li><span class="toc-title">5. iPad Setup</span><span class="toc-page">9</span></li>
+            <li><span class="toc-title">6. Fully Kiosk Browser Configuration</span><span class="toc-page">11</span></li>
+            <li><span class="toc-title">7. Mounting & Power Solutions</span><span class="toc-page">13</span></li>
+            <li><span class="toc-title">8. Troubleshooting</span><span class="toc-page">14</span></li>
+            <li><span class="toc-title">9. Quick Reference Card</span><span class="toc-page">15</span></li>
+        </ul>
+        
+        <div class="intro-box" style="margin-top: 50px;">
+            <strong>What is Kiosk Mode?</strong><br><br>
+            Kiosk mode locks your tablet to display only the NEXUS dashboard. It prevents accidental exits, 
+            hides system notifications, keeps the screen always on, and automatically restarts the app if it crashes. 
+            This is perfect for wall-mounted smart home control panels.
+        </div>
+    </div>
+    
+    <!-- Page 1: Introduction -->
+    <div class="page">
+        <h1>1. Introduction</h1>
+        
+        <p>Welcome to your NEXUS Home Control Center! This guide will walk you through setting up tablets 
+        as dedicated wall-mounted control panels throughout your home at 332 Bridgegate Dr.</p>
+        
+        <h2>Your Dashboard URL</h2>
+        <p>This is the address you'll enter on each tablet:</p>
+        
+        <div class="dashboard-url">https://witty-cliff-0461f7f10.3.azurestaticapps.net</div>
+        
+        <div class="tip-box">
+            <strong>Tip:</strong> Bookmark this URL or save it as a note. You'll need it for each tablet you set up.
+        </div>
+        
+        <h2>What Each Tablet Will Do</h2>
+        <ul class="checklist">
+            <li>Display the NEXUS dashboard 24/7</li>
+            <li>Show real-time Alexa activity from all Echo devices</li>
+            <li>Control lights, thermostat, and scenes with touch</li>
+            <li>Display weather, time, and security status</li>
+            <li>Quick-launch apps like Spotify, Netflix, Ring</li>
+            <li>Wake on motion (with compatible apps)</li>
+        </ul>
+        
+        <h2>Backend Services</h2>
+        <p>Your deployment includes these Azure services that power the dashboard:</p>
+        
+        <table class="hardware-table">
+            <tr>
+                <th>Service</th>
+                <th>URL</th>
+            </tr>
+            <tr>
+                <td>SignalR (Real-time)</td>
+                <td><code>https://nexus-alexa-bridge-45799.azurewebsites.net/api/negotiate</code></td>
+            </tr>
+            <tr>
+                <td>Broadcast Test</td>
+                <td><code>https://nexus-alexa-bridge-45799.azurewebsites.net/api/broadcast</code></td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Page 2: Hardware -->
+    <div class="page">
+        <h1>2. Recommended Hardware</h1>
+        
+        <h2>Tablets</h2>
+        <table class="hardware-table">
+            <tr>
+                <th>Location</th>
+                <th>Recommended Tablet</th>
+                <th>Price</th>
+                <th>Why</th>
+            </tr>
+            <tr>
+                <td>Kitchen</td>
+                <td>Amazon Fire HD 10</td>
+                <td class="price">~$150</td>
+                <td>Large screen, built-in Alexa, Show Mode</td>
+            </tr>
+            <tr>
+                <td>Living Room</td>
+                <td>Amazon Fire HD 10</td>
+                <td class="price">~$150</td>
+                <td>Consistent experience across home</td>
+            </tr>
+            <tr>
+                <td>Hallway</td>
+                <td>Amazon Fire HD 8</td>
+                <td class="price">~$100</td>
+                <td>Compact, budget-friendly</td>
+            </tr>
+            <tr>
+                <td>Bedroom</td>
+                <td>Echo Show 8</td>
+                <td class="price">~$130</td>
+                <td>Native Alexa, smaller footprint</td>
+            </tr>
+            <tr>
+                <td>Office</td>
+                <td>Samsung Galaxy Tab A8</td>
+                <td class="price">~$180</td>
+                <td>Full Android, Play Store access</td>
+            </tr>
+        </table>
+        
+        <h2>Mounting Solutions</h2>
+        <table class="hardware-table">
+            <tr>
+                <th>Type</th>
+                <th>Product</th>
+                <th>Price</th>
+            </tr>
+            <tr>
+                <td>Magnetic Mount</td>
+                <td>MagicMount (removable)</td>
+                <td class="price">~$30</td>
+            </tr>
+            <tr>
+                <td>Flush Wall Mount</td>
+                <td>VidaMount or TabMount</td>
+                <td class="price">~$50-80</td>
+            </tr>
+            <tr>
+                <td>With Charging</td>
+                <td>PoE Texas Tablet Mount</td>
+                <td class="price">~$150</td>
+            </tr>
+        </table>
+        
+        <h2>Power Solutions</h2>
+        <table class="hardware-table">
+            <tr>
+                <th>Option</th>
+                <th>Pros</th>
+                <th>Cons</th>
+            </tr>
+            <tr>
+                <td>USB Wall Outlet</td>
+                <td>Clean install, no visible cables</td>
+                <td>Requires electrical work</td>
+            </tr>
+            <tr>
+                <td>Cable Raceway</td>
+                <td>No electrical work needed</td>
+                <td>Visible (but paintable)</td>
+            </tr>
+            <tr>
+                <td>PoE (Power over Ethernet)</td>
+                <td>Power + network in one cable</td>
+                <td>Most expensive, requires PoE switch</td>
+            </tr>
+        </table>
+        
+        <div class="tip-box">
+            <strong>Budget Estimate:</strong> 3 Fire tablets + mounts + cables â‰ˆ $500-600 total
+        </div>
+    </div>
+    
+    <!-- Page 3: Fire Tablet -->
+    <div class="page">
+        <h1>3. Amazon Fire Tablet Setup</h1>
+        
+        <div class="tablet-section">
+            <div class="tablet-header">
+                <div class="tablet-icon fire">ðŸ”¥</div>
+                <div>
+                    <div class="tablet-title">Amazon Fire HD 8 / HD 10</div>
+                    <div class="tablet-subtitle">Best budget option with built-in Alexa</div>
+                </div>
+            </div>
+            
+            <h3>Option A: Show Mode (Simplest)</h3>
+            <p>Turns your Fire tablet into an Echo Show-like device.</p>
+            
+            <ol class="steps">
+                <li>
+                    <div class="step-title">Enable Show Mode</div>
+                    <div class="step-detail">Settings â†’ Device Options â†’ Show Mode â†’ Toggle ON</div>
+                </li>
+                <li>
+                    <div class="step-title">Set to Auto-Enter Show Mode</div>
+                    <div class="step-detail">Enable "Automatically enter Show Mode when docked"</div>
+                </li>
+                <li>
+                    <div class="step-title">Connect to Charging Dock</div>
+                    <div class="step-detail">When plugged in, it will show the Alexa home screen</div>
+                </li>
+            </ol>
+            
+            <div class="warning-box">
+                <strong>Limitation:</strong> Show Mode displays Amazon's interface, not your custom NEXUS dashboard. 
+                For full NEXUS experience, use Option B.
+            </div>
+            
+            <h3>Option B: Fully Kiosk Browser (Recommended)</h3>
+            <p>Locks the tablet to your NEXUS dashboard with advanced features.</p>
+            
+            <ol class="steps">
+                <li>
+                    <div class="step-title">Install Fully Kiosk Browser</div>
+                    <div class="step-detail">Open Amazon Appstore â†’ Search "Fully Kiosk Browser" â†’ Install</div>
+                </li>
+                <li>
+                    <div class="step-title">Open Fully Kiosk Browser</div>
+                    <div class="step-detail">Launch the app from your home screen</div>
+                </li>
+                <li>
+                    <div class="step-title">Enter Dashboard URL</div>
+                    <div class="step-detail">Type: <strong>https://witty-cliff-0461f7f10.3.azurestaticapps.net</strong></div>
+                </li>
+                <li>
+                    <div class="step-title">Access Settings</div>
+                    <div class="step-detail">Swipe from left edge or triple-tap top-left corner</div>
+                </li>
+                <li>
+                    <div class="step-title">Configure Kiosk Mode</div>
+                    <div class="step-detail">See "Fully Kiosk Configuration" section for detailed settings</div>
+                </li>
+                <li>
+                    <div class="step-title">Enable Kiosk Mode</div>
+                    <div class="step-detail">Settings â†’ Kiosk Mode â†’ Enable Kiosk Mode â†’ ON</div>
+                </li>
+            </ol>
+            
+            <div class="info-box">
+                <strong>License:</strong> Fully Kiosk Browser costs ~$7 per device for full features. 
+                Free version works but shows occasional prompts.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Page 4: Fire Tablet Continued -->
+    <div class="page">
+        <h1>3. Amazon Fire Tablet Setup (Continued)</h1>
+        
+        <h2>Fire Tablet Quick Settings</h2>
+        <p>Apply these settings for optimal kiosk performance:</p>
+        
+        <ol class="steps">
+            <li>
+                <div class="step-title">Disable Lock Screen</div>
+                <div class="step-detail">Settings â†’ Security & Privacy â†’ Lock Screen Password â†’ OFF</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Auto-Sleep</div>
+                <div class="step-detail">Settings â†’ Display â†’ Screen Timeout â†’ Never (when plugged in)</div>
+            </li>
+            <li>
+                <div class="step-title">Enable Stay Awake</div>
+                <div class="step-detail">Settings â†’ Device Options â†’ Developer Options â†’ Stay Awake â†’ ON</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Notifications</div>
+                <div class="step-detail">Settings â†’ Notifications â†’ Turn off for all non-essential apps</div>
+            </li>
+            <li>
+                <div class="step-title">Set Brightness</div>
+                <div class="step-detail">Settings â†’ Display â†’ Adaptive Brightness OFF, set to 70-80%</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Alexa Hands-Free</div>
+                <div class="step-detail">Settings â†’ Alexa â†’ Hands-Free Mode â†’ OFF (prevents accidental triggers)</div>
+            </li>
+        </ol>
+        
+        <div class="tip-box">
+            <strong>Enable Developer Options:</strong> Settings â†’ Device Options â†’ Tap "Serial Number" 7 times
+        </div>
+        
+        <h2>Fire Tablet Specific Issues</h2>
+        
+        <table class="hardware-table">
+            <tr>
+                <th>Issue</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Lockscreen ads appearing</td>
+                <td>Pay $15 to remove ads, or contact Amazon support</td>
+            </tr>
+            <tr>
+                <td>Software updates interrupting</td>
+                <td>Settings â†’ Device Options â†’ System Updates â†’ Turn off auto-updates</td>
+            </tr>
+            <tr>
+                <td>Amazon apps opening</td>
+                <td>Use Fully Kiosk to block other apps completely</td>
+            </tr>
+            <tr>
+                <td>Screen burn-in concerns</td>
+                <td>Enable screensaver in Fully Kiosk with motion wake</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Page 5: Android -->
+    <div class="page">
+        <h1>4. Android Tablet Setup</h1>
+        
+        <div class="tablet-section">
+            <div class="tablet-header">
+                <div class="tablet-icon android">ðŸ¤–</div>
+                <div>
+                    <div class="tablet-title">Samsung / Lenovo / Generic Android</div>
+                    <div class="tablet-subtitle">Full Android experience with Play Store</div>
+                </div>
+            </div>
+            
+            <h3>Option A: Screen Pinning (Free, Built-in)</h3>
+            <p>Basic lockdown using Android's built-in feature.</p>
+            
+            <ol class="steps">
+                <li>
+                    <div class="step-title">Enable Screen Pinning</div>
+                    <div class="step-detail">Settings â†’ Security â†’ Advanced â†’ Screen Pinning â†’ ON</div>
+                </li>
+                <li>
+                    <div class="step-title">Open Chrome/Browser</div>
+                    <div class="step-detail">Navigate to: <strong>https://witty-cliff-0461f7f10.3.azurestaticapps.net</strong></div>
+                </li>
+                <li>
+                    <div class="step-title">Add to Home Screen</div>
+                    <div class="step-detail">Chrome menu (â‹®) â†’ "Add to Home screen" â†’ Name it "NEXUS"</div>
+                </li>
+                <li>
+                    <div class="step-title">Open Recent Apps</div>
+                    <div class="step-detail">Tap the square navigation button</div>
+                </li>
+                <li>
+                    <div class="step-title">Pin the App</div>
+                    <div class="step-detail">Tap the app icon at top of card â†’ "Pin this app"</div>
+                </li>
+            </ol>
+            
+            <div class="warning-box">
+                <strong>Limitation:</strong> Users can unpin by holding Back + Recent buttons. 
+                For true lockdown, use Option B.
+            </div>
+            
+            <h3>Option B: Fully Kiosk Browser (Recommended)</h3>
+            
+            <ol class="steps">
+                <li>
+                    <div class="step-title">Install from Play Store</div>
+                    <div class="step-detail">Search "Fully Kiosk Browser" â†’ Install</div>
+                </li>
+                <li>
+                    <div class="step-title">Grant Permissions</div>
+                    <div class="step-detail">Allow all requested permissions for full functionality</div>
+                </li>
+                <li>
+                    <div class="step-title">Set Dashboard URL</div>
+                    <div class="step-detail">Enter: <strong>https://witty-cliff-0461f7f10.3.azurestaticapps.net</strong></div>
+                </li>
+                <li>
+                    <div class="step-title">Configure & Lock</div>
+                    <div class="step-detail">See Fully Kiosk Configuration section</div>
+                </li>
+            </ol>
+        </div>
+        
+        <h2>Samsung Knox (Enterprise Option)</h2>
+        <p>For Samsung tablets, Knox provides enterprise-grade lockdown:</p>
+        <ul class="checklist">
+            <li>Remote device management</li>
+            <li>App whitelisting/blacklisting</li>
+            <li>Over-the-air configuration</li>
+            <li>Requires Knox license (~$5/device/year)</li>
+        </ul>
+    </div>
+    
+    <!-- Page 6: Android Continued -->
+    <div class="page">
+        <h1>4. Android Tablet Setup (Continued)</h1>
+        
+        <h2>Essential Android Settings</h2>
+        
+        <ol class="steps">
+            <li>
+                <div class="step-title">Disable Lock Screen</div>
+                <div class="step-detail">Settings â†’ Security â†’ Screen Lock â†’ None or Swipe</div>
+            </li>
+            <li>
+                <div class="step-title">Keep Screen On (Developer Option)</div>
+                <div class="step-detail">Settings â†’ Developer Options â†’ Stay Awake â†’ ON</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Adaptive Brightness</div>
+                <div class="step-detail">Settings â†’ Display â†’ Adaptive Brightness â†’ OFF</div>
+            </li>
+            <li>
+                <div class="step-title">Set Display Timeout</div>
+                <div class="step-detail">Settings â†’ Display â†’ Screen Timeout â†’ 30 minutes (Fully Kiosk overrides this)</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Notifications</div>
+                <div class="step-detail">Settings â†’ Notifications â†’ For each app â†’ OFF</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Software Updates</div>
+                <div class="step-detail">Settings â†’ Software Update â†’ Auto Download â†’ OFF</div>
+            </li>
+        </ol>
+        
+        <div class="tip-box">
+            <strong>Enable Developer Options:</strong> Settings â†’ About Tablet â†’ Tap "Build Number" 7 times
+        </div>
+        
+        <h2>Recommended Android Tablets</h2>
+        
+        <table class="hardware-table">
+            <tr>
+                <th>Model</th>
+                <th>Screen</th>
+                <th>Price</th>
+                <th>Notes</th>
+            </tr>
+            <tr>
+                <td>Samsung Galaxy Tab A8</td>
+                <td>10.5"</td>
+                <td class="price">~$180</td>
+                <td>Best value, good performance</td>
+            </tr>
+            <tr>
+                <td>Samsung Galaxy Tab S6 Lite</td>
+                <td>10.4"</td>
+                <td class="price">~$250</td>
+                <td>Better display, S Pen included</td>
+            </tr>
+            <tr>
+                <td>Lenovo Tab M10 Plus</td>
+                <td>10.3"</td>
+                <td class="price">~$150</td>
+                <td>Budget option, decent specs</td>
+            </tr>
+            <tr>
+                <td>Google Pixel Tablet</td>
+                <td>11"</td>
+                <td class="price">~$400</td>
+                <td>Premium, includes charging dock</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Page 7: iPad -->
+    <div class="page">
+        <h1>5. iPad Setup</h1>
+        
+        <div class="tablet-section">
+            <div class="tablet-header">
+                <div class="tablet-icon ipad">ðŸŽ</div>
+                <div>
+                    <div class="tablet-title">Apple iPad</div>
+                    <div class="tablet-subtitle">Premium option with excellent display</div>
+                </div>
+            </div>
+            
+            <h3>Option A: Guided Access (Free, Built-in)</h3>
+            <p>Apple's built-in kiosk mode, simple and effective.</p>
+            
+            <ol class="steps">
+                <li>
+                    <div class="step-title">Enable Guided Access</div>
+                    <div class="step-detail">Settings â†’ Accessibility â†’ Guided Access â†’ Toggle ON</div>
+                </li>
+                <li>
+                    <div class="step-title">Set a Passcode</div>
+                    <div class="step-detail">Tap "Passcode Settings" â†’ "Set Guided Access Passcode"</div>
+                </li>
+                <li>
+                    <div class="step-title">Enable Accessibility Shortcut</div>
+                    <div class="step-detail">This allows triple-click to start/stop Guided Access</div>
+                </li>
+                <li>
+                    <div class="step-title">Open Safari</div>
+                    <div class="step-detail">Navigate to: <strong>https://witty-cliff-0461f7f10.3.azurestaticapps.net</strong></div>
+                </li>
+                <li>
+                    <div class="step-title">Add to Home Screen</div>
+                    <div class="step-detail">Tap Share button â†’ "Add to Home Screen" â†’ Name it "NEXUS"</div>
+                </li>
+                <li>
+                    <div class="step-title">Open NEXUS from Home Screen</div>
+                    <div class="step-detail">This opens it as a full-screen web app</div>
+                </li>
+                <li>
+                    <div class="step-title">Start Guided Access</div>
+                    <div class="step-detail">Triple-click Side button (or Home button) â†’ Tap "Start"</div>
+                </li>
+            </ol>
+            
+            <div class="info-box">
+                <strong>To Exit:</strong> Triple-click Side button â†’ Enter passcode â†’ Tap "End"
+            </div>
+        </div>
+        
+        <h2>Guided Access Options</h2>
+        <p>When starting Guided Access, you can configure:</p>
+        
+        <ul class="checklist">
+            <li><strong>Disable Touch:</strong> Prevent all touch input (display only)</li>
+            <li><strong>Disable Motion:</strong> Lock screen orientation</li>
+            <li><strong>Disable Keyboards:</strong> Prevent keyboard from appearing</li>
+            <li><strong>Time Limit:</strong> Auto-exit after set time (not for kiosk use)</li>
+            <li><strong>Circle Areas:</strong> Disable touch in specific screen regions</li>
+        </ul>
+    </div>
+    
+    <!-- Page 8: iPad Continued -->
+    <div class="page">
+        <h1>5. iPad Setup (Continued)</h1>
+        
+        <h2>Essential iPad Settings</h2>
+        
+        <ol class="steps">
+            <li>
+                <div class="step-title">Disable Auto-Lock</div>
+                <div class="step-detail">Settings â†’ Display & Brightness â†’ Auto-Lock â†’ Never</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Passcode (Optional)</div>
+                <div class="step-detail">Settings â†’ Face ID & Passcode â†’ Turn Passcode Off</div>
+            </li>
+            <li>
+                <div class="step-title">Enable Do Not Disturb</div>
+                <div class="step-detail">Settings â†’ Focus â†’ Do Not Disturb â†’ Schedule always</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Control Center Access</div>
+                <div class="step-detail">Settings â†’ Face ID & Passcode â†’ Disable "Control Center" when locked</div>
+            </li>
+            <li>
+                <div class="step-title">Disable Notification Center</div>
+                <div class="step-detail">Settings â†’ Face ID & Passcode â†’ Disable "Notification Center"</div>
+            </li>
+            <li>
+                <div class="step-title">Set Brightness</div>
+                <div class="step-detail">Settings â†’ Display â†’ Auto-Brightness OFF, set to 70%</div>
+            </li>
+        </ol>
+        
+        <h2>Option B: Apple Configurator (Multiple iPads)</h2>
+        <p>For managing multiple iPads, use Apple Configurator 2 (Mac required):</p>
+        
+        <ol class="steps">
+            <li>
+                <div class="step-title">Download Apple Configurator 2</div>
+                <div class="step-detail">Free from Mac App Store</div>
+            </li>
+            <li>
+                <div class="step-title">Create Configuration Profile</div>
+                <div class="step-detail">File â†’ New Profile â†’ Add restrictions and web clip</div>
+            </li>
+            <li>
+                <div class="step-title">Add Web Clip</div>
+                <div class="step-detail">Adds NEXUS as a home screen app</div>
+            </li>
+            <li>
+                <div class="step-title">Enable Single App Mode</div>
+                <div class="step-detail">Locks iPad to the NEXUS web app</div>
+            </li>
+            <li>
+                <div class="step-title">Deploy to iPads</div>
+                <div class="step-detail">Connect iPad via USB â†’ Apply profile</div>
+            </li>
+        </ol>
+        
+        <h2>Recommended iPads</h2>
+        
+        <table class="hardware-table">
+            <tr>
+                <th>Model</th>
+                <th>Screen</th>
+                <th>Price</th>
+                <th>Notes</th>
+            </tr>
+            <tr>
+                <td>iPad 10th Gen</td>
+                <td>10.9"</td>
+                <td class="price">~$350</td>
+                <td>Best value iPad</td>
+            </tr>
+            <tr>
+                <td>iPad Mini</td>
+                <td>8.3"</td>
+                <td class="price">~$400</td>
+                <td>Compact, premium</td>
+            </tr>
+            <tr>
+                <td>iPad Air</td>
+                <td>10.9"</td>
+                <td class="price">~$550</td>
+                <td>Premium display and performance</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Page 9: Fully Kiosk -->
+    <div class="page">
+        <h1>6. Fully Kiosk Browser Configuration</h1>
+        
+        <p>Fully Kiosk Browser is the recommended solution for Android and Fire tablets. 
+        Here are the optimal settings for your NEXUS dashboard:</p>
+        
+        <h2>Initial Setup</h2>
+        <div class="code-block">
+            Start URL: <span class="string">https://witty-cliff-0461f7f10.3.azurestaticapps.net</span>
+        </div>
+        
+        <h2>Web Content Settings</h2>
+        <table class="hardware-table">
+            <tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+            <tr><td>Enable JavaScript</td><td>ON</td><td>Required for dashboard</td></tr>
+            <tr><td>Enable Cookies</td><td>ON</td><td>Save preferences</td></tr>
+            <tr><td>Autoplay Videos</td><td>ON</td><td>For camera feeds</td></tr>
+            <tr><td>Enable Geolocation</td><td>ON</td><td>Weather accuracy</td></tr>
+            <tr><td>Web Zoom</td><td>100%</td><td>Optimal sizing</td></tr>
+        </table>
+        
+        <h2>Kiosk Mode Settings</h2>
+        <table class="hardware-table">
+            <tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+            <tr><td>Enable Kiosk Mode</td><td>ON</td><td>Locks to dashboard</td></tr>
+            <tr><td>Kiosk Exit Gesture</td><td>Long press back</td><td>Admin access</td></tr>
+            <tr><td>Kiosk Exit PIN</td><td>Your PIN</td><td>Prevent unauthorized exit</td></tr>
+            <tr><td>Lock Safe Mode</td><td>ON</td><td>Prevent safe mode reboot</td></tr>
+            <tr><td>Disable Status Bar</td><td>ON</td><td>Hide notifications</td></tr>
+            <tr><td>Disable Navigation Bar</td><td>ON</td><td>Hide nav buttons</td></tr>
+        </table>
+        
+        <h2>Screen & Power Settings</h2>
+        <table class="hardware-table">
+            <tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+            <tr><td>Keep Screen On</td><td>ON</td><td>24/7 display</td></tr>
+            <tr><td>Screen Brightness</td><td>70-80%</td><td>Visible but not blinding</td></tr>
+            <tr><td>Screensaver Enabled</td><td>ON</td><td>Prevent burn-in</td></tr>
+            <tr><td>Screensaver Timeout</td><td>5 minutes</td><td>After no touch</td></tr>
+            <tr><td>Screensaver Type</td><td>Screen Off or Clock</td><td>Dim when idle</td></tr>
+        </table>
+    </div>
+    
+    <!-- Page 10: Fully Kiosk Continued -->
+    <div class="page">
+        <h1>6. Fully Kiosk Browser Configuration (Continued)</h1>
+        
+        <h2>Motion Detection Settings</h2>
+        <p>Wake the screen when someone approaches:</p>
+        
+        <table class="hardware-table">
+            <tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+            <tr><td>Enable Motion Detection</td><td>ON</td><td>Camera-based wake</td></tr>
+            <tr><td>Motion Sensitivity</td><td>Medium (50%)</td><td>Balance sensitivity</td></tr>
+            <tr><td>Turn Screen On on Motion</td><td>ON</td><td>Wake on approach</td></tr>
+            <tr><td>Exit Screensaver on Motion</td><td>ON</td><td>Show dashboard</td></tr>
+        </table>
+        
+        <div class="tip-box">
+            <strong>Pro Tip:</strong> Motion detection uses the front camera. Position the tablet 
+            where people naturally walk by for best results.
+        </div>
+        
+        <h2>Device Management Settings</h2>
+        <table class="hardware-table">
+            <tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+            <tr><td>Restart on Crash</td><td>ON</td><td>Auto-recovery</td></tr>
+            <tr><td>Restart on Network Error</td><td>ON</td><td>Handle WiFi issues</td></tr>
+            <tr><td>Daily Restart</td><td>4:00 AM</td><td>Clear memory daily</td></tr>
+            <tr><td>Load Start URL on Network Reconnect</td><td>ON</td><td>Resume after outage</td></tr>
+        </table>
+        
+        <h2>Remote Administration</h2>
+        <p>Manage tablets from your computer:</p>
+        
+        <ol class="steps">
+            <li>
+                <div class="step-title">Enable Remote Admin</div>
+                <div class="step-detail">Settings â†’ Remote Administration â†’ Enable</div>
+            </li>
+            <li>
+                <div class="step-title">Set Admin Password</div>
+                <div class="step-detail">Create a strong password for web access</div>
+            </li>
+            <li>
+                <div class="step-title">Note the IP Address</div>
+                <div class="step-detail">Shown in Remote Admin settings (e.g., 192.168.1.100)</div>
+            </li>
+            <li>
+                <div class="step-title">Access from Browser</div>
+                <div class="step-detail">http://[tablet-ip]:2323 from any device on same network</div>
+            </li>
+        </ol>
+        
+        <div class="info-box">
+            <strong>Remote Admin Features:</strong> View screenshots, reload page, restart browser, 
+            change URL, view device info, and moreâ€”all from your computer.
+        </div>
+        
+        <h2>Licensing</h2>
+        <p>Fully Kiosk Browser offers:</p>
+        <ul class="checklist">
+            <li><strong>Free Version:</strong> Full features with occasional nag screens</li>
+            <li><strong>Single License:</strong> $7.90 per device (one-time)</li>
+            <li><strong>Volume License:</strong> Discounts for 5+ devices</li>
+        </ul>
+    </div>
+    
+    <!-- Page 11: Mounting -->
+    <div class="page">
+        <h1>7. Mounting & Power Solutions</h1>
+        
+        <h2>Wall Mounting Options</h2>
+        
+        <div class="tablet-section">
+            <h3>Option 1: Magnetic Mount (Removable)</h3>
+            <p>Best for: Renters or frequently moved tablets</p>
+            <ul class="checklist">
+                <li>Attach metal plate to tablet back (or case)</li>
+                <li>Mount magnetic base on wall with screws or adhesive</li>
+                <li>Tablet easily snaps on/off</li>
+                <li>Products: MagicMount, Scosche, iOttie</li>
+            </ul>
+            <p><strong>Cost:</strong> <span class="price">$20-40</span></p>
+        </div>
+        
+        <div class="tablet-section">
+            <h3>Option 2: Flush Wall Mount</h3>
+            <p>Best for: Permanent, clean installation</p>
+            <ul class="checklist">
+                <li>Tablet sits flush against wall in frame</li>
+                <li>Cable routed through wall</li>
+                <li>Professional appearance</li>
+                <li>Products: VidaMount, TabMount, Heckler Design</li>
+            </ul>
+            <p><strong>Cost:</strong> <span class="price">$50-150</span></p>
+        </div>
+        
+        <div class="tablet-section">
+            <h3>Option 3: PoE Powered Mount</h3>
+            <p>Best for: New construction or serious installations</p>
+            <ul class="checklist">
+                <li>Single Ethernet cable provides power + network</li>
+                <li>No WiFi needed, more reliable</li>
+                <li>Requires PoE switch or injector</li>
+                <li>Products: PoE Texas, Lavu, ArmorActive</li>
+            </ul>
+            <p><strong>Cost:</strong> <span class="price">$150-300</span> + PoE switch</p>
+        </div>
+        
+        <h2>Power Cable Management</h2>
+        
+        <table class="hardware-table">
+            <tr><th>Method</th><th>Difficulty</th><th>Appearance</th><th>Cost</th></tr>
+            <tr><td>In-wall USB outlet</td><td>Medium (electrical)</td><td>â˜…â˜…â˜…â˜…â˜…</td><td>$25-50</td></tr>
+            <tr><td>Paintable cable raceway</td><td>Easy</td><td>â˜…â˜…â˜…â˜…â˜†</td><td>$10-20</td></tr>
+            <tr><td>Behind furniture</td><td>Easy</td><td>â˜…â˜…â˜…â˜†â˜†</td><td>$0</td></tr>
+            <tr><td>Cable inside wall</td><td>Hard</td><td>â˜…â˜…â˜…â˜…â˜…</td><td>$20+</td></tr>
+        </table>
+        
+        <div class="warning-box">
+            <strong>Electrical Safety:</strong> If installing USB outlets, hire a licensed electrician 
+            or ensure you're comfortable with electrical work and local codes.
+        </div>
+    </div>
+    
+    <!-- Page 12: Troubleshooting -->
+    <div class="page">
+        <h1>8. Troubleshooting</h1>
+        
+        <h2>Common Issues & Solutions</h2>
+        
+        <table class="hardware-table">
+            <tr><th>Problem</th><th>Solution</th></tr>
+            <tr>
+                <td>Dashboard not loading</td>
+                <td>
+                    1. Check WiFi connection<br>
+                    2. Try loading URL in regular browser<br>
+                    3. Check Azure service status<br>
+                    4. Restart tablet
+                </td>
+            </tr>
+            <tr>
+                <td>Alexa events not appearing</td>
+                <td>
+                    1. Check "Connected" status in header<br>
+                    2. Test broadcast endpoint (see below)<br>
+                    3. Verify SignalR service is running
+                </td>
+            </tr>
+            <tr>
+                <td>Screen keeps turning off</td>
+                <td>
+                    1. Enable "Stay Awake" in developer options<br>
+                    2. Check Fully Kiosk "Keep Screen On" setting<br>
+                    3. Ensure tablet is plugged in
+                </td>
+            </tr>
+            <tr>
+                <td>Exited kiosk mode accidentally</td>
+                <td>
+                    1. Reopen Fully Kiosk Browser<br>
+                    2. It should auto-enter kiosk mode<br>
+                    3. If not, go to Settings â†’ Enable Kiosk Mode
+                </td>
+            </tr>
+            <tr>
+                <td>Tablet overheating</td>
+                <td>
+                    1. Reduce screen brightness<br>
+                    2. Enable screensaver for idle times<br>
+                    3. Ensure ventilation around mount<br>
+                    4. Consider tablet with better thermals
+                </td>
+            </tr>
+            <tr>
+                <td>Touch not responding</td>
+                <td>
+                    1. Clean screen<br>
+                    2. Check if touch disabled in Guided Access<br>
+                    3. Restart tablet<br>
+                    4. Check for screen protector issues
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Test Broadcast Command</h2>
+        <p>Send a test event to verify real-time updates:</p>
+        
+        <div class="code-block">
+<span class="cmd"># PowerShell Test Command</span>
+$body = @{
+    device = "Test Device"
+    utterance = "Alexa, this is a test"
+    response = "Test successful!"
+    type = "general"
+} | ConvertTo-Json
+
+Invoke-RestMethod 
+    -Uri "<span class="string">https://nexus-alexa-bridge-45799.azurewebsites.net/api/broadcast</span>" 
+    -Method Post 
+    -Body $body 
+    -ContentType "application/json"
+        </div>
+        
+        <p>If successful, you should see the test event appear on all connected dashboards.</p>
+    </div>
+    
+    <!-- Page 13: Quick Reference -->
+    <div class="page">
+        <h1>9. Quick Reference Card</h1>
+        
+        <div class="qr-section">
+            <h2>Dashboard URL</h2>
+            <div class="dashboard-url">https://witty-cliff-0461f7f10.3.azurestaticapps.net</div>
+        </div>
+        
+        <h2>Important URLs</h2>
+        <table class="hardware-table">
+            <tr><th>Service</th><th>URL</th></tr>
+            <tr><td>Dashboard</td><td><code>https://witty-cliff-0461f7f10.3.azurestaticapps.net</code></td></tr>
+            <tr><td>Backend API</td><td><code>https://nexus-alexa-bridge-45799.azurewebsites.net</code></td></tr>
+            <tr><td>Test Broadcast</td><td><code>https://nexus-alexa-bridge-45799.azurewebsites.net/api/broadcast</code></td></tr>
+        </table>
+        
+        <h2>Fully Kiosk Quick Access</h2>
+        <table class="hardware-table">
+            <tr><th>Action</th><th>Gesture</th></tr>
+            <tr><td>Open Settings</td><td>Swipe from left edge or triple-tap top-left</td></tr>
+            <tr><td>Exit Kiosk Mode</td><td>Long press Back button â†’ Enter PIN</td></tr>
+            <tr><td>Reload Page</td><td>Pull down from top</td></tr>
+        </table>
+        
+        <h2>iPad Guided Access</h2>
+        <table class="hardware-table">
+            <tr><th>Action</th><th>Gesture</th></tr>
+            <tr><td>Start Guided Access</td><td>Triple-click Side button â†’ Start</td></tr>
+            <tr><td>Exit Guided Access</td><td>Triple-click Side button â†’ Enter passcode â†’ End</td></tr>
+        </table>
+        
+        <h2>Support Contacts</h2>
+        <ul class="checklist">
+            <li>Azure Portal: portal.azure.com</li>
+            <li>Fully Kiosk Support: fully-kiosk.com/support</li>
+            <li>Apple Support: support.apple.com</li>
+        </ul>
+        
+        <div class="footer">
+            <p>NEXUS Home Control Center | 332 Bridgegate Dr, Cary, NC 27519</p>
+            <p>Generated on december 09, 2025 at 7:15 </p>
+            <p>Dashboard: https://witty-cliff-0461f7f10.3.azurestaticapps.net</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "nexus-alexa-bridge",
+  "version": "1.0.0",
+  "description": "NEXUS Home Control Backend",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "ring-client-api": "^14.2.0"
+  }
+}
