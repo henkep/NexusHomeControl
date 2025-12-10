@@ -1646,6 +1646,9 @@
                     }
                     if (obs.windSpeed && obs.windSpeed.value !== null) {
                         windSpeed = Math.round(obs.windSpeed.value * 0.621371);
+                    } else if (obs.windGust && obs.windGust.value !== null) {
+                        // Fallback to gust if speed not available
+                        windSpeed = Math.round(obs.windGust.value * 0.621371);
                     }
                     if (obs.windChill && obs.windChill.value !== null) {
                         feelsLike = Math.round(obs.windChill.value * 9/5 + 32);
