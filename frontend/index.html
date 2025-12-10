@@ -1638,18 +1638,18 @@
                     const obsData = await obsResponse.json();
                     const obs = obsData.properties;
                     
-                    if (obs.temperature.value !== null) {
+                    if (obs.temperature && obs.temperature.value !== null) {
                         currentTemp = Math.round(obs.temperature.value * 9/5 + 32);
                     }
-                    if (obs.relativeHumidity.value !== null) {
+                    if (obs.relativeHumidity && obs.relativeHumidity.value !== null) {
                         humidity = Math.round(obs.relativeHumidity.value);
                     }
-                    if (obs.windSpeed.value !== null) {
+                    if (obs.windSpeed && obs.windSpeed.value !== null) {
                         windSpeed = Math.round(obs.windSpeed.value * 0.621371);
                     }
-                    if (obs.windChill.value !== null) {
+                    if (obs.windChill && obs.windChill.value !== null) {
                         feelsLike = Math.round(obs.windChill.value * 9/5 + 32);
-                    } else if (obs.heatIndex.value !== null) {
+                    } else if (obs.heatIndex && obs.heatIndex.value !== null) {
                         feelsLike = Math.round(obs.heatIndex.value * 9/5 + 32);
                     } else {
                         feelsLike = currentTemp;
