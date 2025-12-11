@@ -334,6 +334,80 @@
             border: 1px solid rgba(255, 107, 53, 0.3);
             color: var(--accent-orange);
         }
+        
+        /* Feature Toggle */
+        .feature-toggle {
+            margin: 10px 0;
+        }
+        
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .toggle-label input {
+            display: none;
+        }
+        
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 13px;
+            position: relative;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-label input:checked + .toggle-switch {
+            background: var(--accent-cyan);
+        }
+        
+        .toggle-label input:checked + .toggle-switch::after {
+            transform: translateX(24px);
+        }
+        
+        /* Radio Options */
+        .flight-source-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .radio-label:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .radio-label input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-cyan);
+        }
     </style>
 </head>
 <body>
@@ -380,6 +454,38 @@
                     <input type="password" class="form-input" id="shellyAuth" placeholder="Only needed for cloud control">
                     <p class="form-hint">Local control works without this</p>
                 </div>
+                
+                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 25px 0;">
+                
+                <h2 class="step-title">📍 Home Location</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Used for weather forecasts and displayed in the dashboard header.
+                </p>
+                
+                <div class="form-group">
+                    <label class="form-label">Display Address</label>
+                    <input type="text" class="form-input" id="homeAddress" placeholder="123 Main St, City, State">
+                    <p class="form-hint">Shown in the dashboard header</p>
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Latitude</label>
+                        <input type="number" step="any" class="form-input" id="homeLat" placeholder="35.7796">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Longitude</label>
+                        <input type="number" step="any" class="form-input" id="homeLon" placeholder="-78.6382">
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-secondary" onclick="detectLocation()" id="detectLocationBtn">
+                    📍 Use My Current Location
+                </button>
+                <p id="locationStatus" style="margin-top: 10px; font-size: 0.9rem;"></p>
+                <p class="form-hint" style="margin-top: 10px;">
+                    💡 Tip: You can find coordinates by right-clicking your address in Google Maps
+                </p>
             </div>
             
             <!-- Step 2: Network Scan -->
@@ -433,12 +539,60 @@
                     <div class="device-list" id="ringDevices"></div>
                 </div>
                 
-                <div id="piawareSection" class="summary-section" style="display: none;">
+                <div id="piawareSection" class="summary-section">
                     <div class="summary-title">
-                        ✈️ PiAware/ADS-B
-                        <span class="summary-count" id="piawareCount">0</span>
+                        ✈️ Flight Tracking (Optional)
                     </div>
-                    <div class="device-list" id="piawareDevices"></div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
+                        Track nearby aircraft using ADS-B data from PiAware or similar receivers.
+                    </p>
+                    
+                    <div class="feature-toggle">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="enableFlightTracking" onchange="toggleFlightTracking()">
+                            <span class="toggle-switch"></span>
+                            Enable Flight Tracking
+                        </label>
+                    </div>
+                    
+                    <div id="flightTrackingOptions" style="display: none; margin-top: 15px;">
+                        <div id="flightSourceAuto" style="display: none;" class="alert alert-success">
+                            <div id="flightSourceStatus"></div>
+                        </div>
+                        
+                        <div class="flight-source-options">
+                            <label class="radio-label">
+                                <input type="radio" name="flightSource" value="auto" id="sourceAuto" checked onchange="updateFlightSource()">
+                                <span>Auto-detect (scan network for PiAware)</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="flightSource" value="local" id="sourceLocal" onchange="updateFlightSource()">
+                                <span>This device (PiAware on same Pi)</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="flightSource" value="remote" id="sourceRemote" onchange="updateFlightSource()">
+                                <span>Remote device (enter URL)</span>
+                            </label>
+                        </div>
+                        
+                        <div id="remoteUrlInput" style="display: none; margin-top: 15px;">
+                            <label class="form-label">PiAware URL</label>
+                            <input type="text" class="form-input" id="piawareUrl" 
+                                   placeholder="http://192.168.1.50:8080 or http://piaware.local:8080">
+                            <p class="form-hint">Enter the IP/hostname and port of your PiAware device</p>
+                            <button type="button" class="btn btn-secondary" onclick="testFlightConnection()" style="margin-top: 10px;">
+                                🔍 Test Connection
+                            </button>
+                            <div id="connectionTestResult" style="margin-top: 10px;"></div>
+                        </div>
+                        
+                        <div id="discoveredPiaware" style="display: none; margin-top: 15px;"></div>
+                        
+                        <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 15px; font-style: italic;">
+                            💡 Don't have a PiAware receiver? A future update will add support for free flight APIs 
+                            like OpenSky Network or ADS-B Exchange.
+                        </p>
+                    </div>
                 </div>
                 
                 <div id="noDevices" class="alert alert-warning" style="display: none;">
@@ -473,6 +627,11 @@
                     <div class="summary-title">✈️ Flight Tracking</div>
                     <ul class="summary-list" id="summaryPiawareList"></ul>
                 </div>
+                
+                <div class="summary-section">
+                    <div class="summary-title">📍 Home Location</div>
+                    <ul class="summary-list" id="summaryLocationList"></ul>
+                </div>
             </div>
         </div>
         
@@ -502,6 +661,16 @@
             honeywell: [],
             ring: [],
             piaware: [],
+            flightTracking: {
+                enabled: false,
+                source: 'auto',  // 'auto', 'local', 'remote'
+                url: null
+            },
+            location: {
+                address: '',
+                lat: null,
+                lon: null
+            },
             credentials: {}
         };
         
@@ -536,15 +705,85 @@
             }
         }
         
+        function detectLocation() {
+            const statusEl = document.getElementById('locationStatus');
+            const btn = document.getElementById('detectLocationBtn');
+            
+            if (!navigator.geolocation) {
+                statusEl.innerHTML = '<span style="color: var(--accent-red);">❌ Geolocation not supported by your browser</span>';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '📍 Detecting...';
+            statusEl.innerHTML = '<span style="color: var(--accent-cyan);">Getting your location...</span>';
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lon = position.coords.longitude.toFixed(6);
+                    
+                    document.getElementById('homeLat').value = lat;
+                    document.getElementById('homeLon').value = lon;
+                    
+                    // Try to reverse geocode for address
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+                        );
+                        const data = await response.json();
+                        
+                        if (data.address) {
+                            const addr = data.address;
+                            const displayAddr = [
+                                addr.house_number,
+                                addr.road,
+                                addr.city || addr.town || addr.village,
+                                addr.state
+                            ].filter(Boolean).join(', ');
+                            
+                            document.getElementById('homeAddress').value = displayAddr;
+                            statusEl.innerHTML = `<span style="color: var(--accent-green);">✅ Location detected: ${displayAddr}</span>`;
+                        } else {
+                            statusEl.innerHTML = `<span style="color: var(--accent-green);">✅ Coordinates set. Please enter your address manually.</span>`;
+                        }
+                    } catch (e) {
+                        statusEl.innerHTML = `<span style="color: var(--accent-green);">✅ Coordinates set (${lat}, ${lon}). Please enter your address manually.</span>`;
+                    }
+                    
+                    btn.disabled = false;
+                    btn.textContent = '📍 Use My Current Location';
+                },
+                (error) => {
+                    let msg = 'Location detection failed';
+                    if (error.code === 1) msg = 'Permission denied. Please allow location access.';
+                    if (error.code === 2) msg = 'Location unavailable';
+                    if (error.code === 3) msg = 'Location request timed out';
+                    
+                    statusEl.innerHTML = `<span style="color: var(--accent-red);">❌ ${msg}</span>`;
+                    btn.disabled = false;
+                    btn.textContent = '📍 Use My Current Location';
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+        
         async function nextStep() {
             if (currentStep === 1) {
-                // Save credentials and start scan
+                // Save credentials and location
                 config.credentials = {
                     honeywellEmail: document.getElementById('honeywellEmail').value,
                     honeywellPassword: document.getElementById('honeywellPassword').value,
                     ringToken: document.getElementById('ringToken').value,
                     shellyAuth: document.getElementById('shellyAuth').value
                 };
+                
+                config.location = {
+                    address: document.getElementById('homeAddress').value,
+                    lat: parseFloat(document.getElementById('homeLat').value) || null,
+                    lon: parseFloat(document.getElementById('homeLon').value) || null
+                };
+                
                 currentStep++;
                 updateProgress();
                 await runDiscovery();
@@ -695,11 +934,14 @@
                 `).join('');
             }
             
-            // PiAware
+            // PiAware - now handled by flight tracking toggle
+            // Pre-populate if devices found during discovery
             if (discoveredDevices.piaware.length > 0) {
-                document.getElementById('piawareSection').style.display = 'block';
-                document.getElementById('piawareCount').textContent = discoveredDevices.piaware.length;
-                document.getElementById('piawareDevices').innerHTML = discoveredDevices.piaware.map((device, i) => `
+                document.getElementById('enableFlightTracking').checked = true;
+                toggleFlightTracking();
+                
+                // Show discovered devices
+                const discoveredHtml = discoveredDevices.piaware.map((device, i) => `
                     <div class="device-item">
                         <input type="checkbox" class="device-checkbox" id="piaware-${i}" checked>
                         <div class="device-icon">✈️</div>
@@ -709,13 +951,82 @@
                         </div>
                     </div>
                 `).join('');
+                
+                document.getElementById('discoveredPiaware').innerHTML = `
+                    <p style="color: var(--accent-green); margin-bottom: 10px;">✅ Found ${discoveredDevices.piaware.length} receiver(s):</p>
+                    ${discoveredHtml}
+                `;
+                document.getElementById('discoveredPiaware').style.display = 'block';
             }
             
-            // No devices message
+            // No devices message (excluding piaware since it's now a feature toggle)
             if (discoveredDevices.honeywell.length === 0 && 
-                discoveredDevices.ring.length === 0 && 
-                discoveredDevices.piaware.length === 0) {
+                discoveredDevices.ring.length === 0) {
                 document.getElementById('noDevices').style.display = 'block';
+            }
+        }
+        
+        function toggleFlightTracking() {
+            const enabled = document.getElementById('enableFlightTracking').checked;
+            const optionsDiv = document.getElementById('flightTrackingOptions');
+            optionsDiv.style.display = enabled ? 'block' : 'none';
+            
+            if (enabled) {
+                updateFlightSource();
+            }
+        }
+        
+        function updateFlightSource() {
+            const source = document.querySelector('input[name="flightSource"]:checked')?.value || 'auto';
+            const remoteInput = document.getElementById('remoteUrlInput');
+            const autoStatus = document.getElementById('flightSourceAuto');
+            
+            remoteInput.style.display = source === 'remote' ? 'block' : 'none';
+            
+            if (source === 'auto' && discoveredDevices.piaware.length > 0) {
+                autoStatus.style.display = 'block';
+                document.getElementById('flightSourceStatus').innerHTML = 
+                    `✅ Will use discovered receiver at ${discoveredDevices.piaware[0].ip}:${discoveredDevices.piaware[0].port}`;
+            } else if (source === 'local') {
+                autoStatus.style.display = 'block';
+                document.getElementById('flightSourceStatus').innerHTML = 
+                    `📍 Will check for PiAware on this device (/run/dump1090-fa/)`;
+            } else {
+                autoStatus.style.display = 'none';
+            }
+        }
+        
+        async function testFlightConnection() {
+            const url = document.getElementById('piawareUrl').value.trim();
+            const resultDiv = document.getElementById('connectionTestResult');
+            
+            if (!url) {
+                resultDiv.innerHTML = '<span style="color: var(--accent-orange);">Please enter a URL</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<span style="color: var(--accent-cyan);">Testing connection...</span>';
+            
+            try {
+                // Normalize URL
+                let testUrl = url;
+                if (!testUrl.startsWith('http')) {
+                    testUrl = 'http://' + testUrl;
+                }
+                if (!testUrl.includes('/data/aircraft.json')) {
+                    testUrl = testUrl.replace(/\/$/, '') + '/data/aircraft.json';
+                }
+                
+                const response = await fetch('/api/test-piaware?url=' + encodeURIComponent(testUrl));
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<span style="color: var(--accent-green);">✅ Connected! Found ${result.aircraft || 0} aircraft.</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span style="color: var(--accent-red);">❌ Connection failed: ${result.error}</span>`;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<span style="color: var(--accent-red);">❌ Error: ${err.message}</span>`;
             }
         }
         
@@ -740,8 +1051,40 @@
                 })
                 .filter(d => d !== null);
             
-            config.piaware = discoveredDevices.piaware
-                .filter((device, i) => document.getElementById(`piaware-${i}`)?.checked);
+            // Flight tracking configuration
+            const flightEnabled = document.getElementById('enableFlightTracking').checked;
+            const flightSource = document.querySelector('input[name="flightSource"]:checked')?.value || 'auto';
+            const remoteUrl = document.getElementById('piawareUrl')?.value.trim();
+            
+            config.flightTracking = {
+                enabled: flightEnabled,
+                source: flightSource,
+                url: flightSource === 'remote' ? remoteUrl : null
+            };
+            
+            // Also save piaware array for backward compatibility
+            if (flightEnabled) {
+                if (flightSource === 'auto') {
+                    config.piaware = discoveredDevices.piaware
+                        .filter((device, i) => document.getElementById(`piaware-${i}`)?.checked);
+                } else if (flightSource === 'remote' && remoteUrl) {
+                    // Parse URL into ip/port
+                    try {
+                        const urlObj = new URL(remoteUrl.startsWith('http') ? remoteUrl : 'http://' + remoteUrl);
+                        config.piaware = [{
+                            ip: urlObj.hostname,
+                            port: parseInt(urlObj.port) || 8080,
+                            url: remoteUrl
+                        }];
+                    } catch (e) {
+                        config.piaware = [{ url: remoteUrl }];
+                    }
+                } else if (flightSource === 'local') {
+                    config.piaware = [{ source: 'local', path: '/run/dump1090-fa/aircraft.json' }];
+                }
+            } else {
+                config.piaware = [];
+            }
         }
         
         function renderSummary() {
@@ -760,10 +1103,30 @@
                     ? '<li>No cameras configured</li>'
                     : config.ring.map(d => `<li>${d.type === 'doorbell' ? '🚪' : '📹'} ${d.name}</li>`).join('');
             
-            document.getElementById('summaryPiawareList').innerHTML = 
-                config.piaware.length === 0 
-                    ? '<li>No flight tracking configured</li>'
-                    : config.piaware.map(d => `<li>✈️ ${d.ip}:${d.port}</li>`).join('');
+            // Flight tracking summary
+            let flightSummary;
+            if (!config.flightTracking.enabled) {
+                flightSummary = '<li>Disabled</li>';
+            } else if (config.flightTracking.source === 'local') {
+                flightSummary = '<li>✈️ Local (this device)</li>';
+            } else if (config.flightTracking.source === 'remote') {
+                flightSummary = `<li>✈️ Remote: ${config.flightTracking.url}</li>`;
+            } else if (config.piaware.length > 0) {
+                flightSummary = config.piaware.map(d => `<li>✈️ ${d.ip}:${d.port}</li>`).join('');
+            } else {
+                flightSummary = '<li>Enabled (auto-detect)</li>';
+            }
+            document.getElementById('summaryPiawareList').innerHTML = flightSummary;
+            
+            // Location summary
+            if (config.location && (config.location.address || config.location.lat)) {
+                document.getElementById('summaryLocationList').innerHTML = 
+                    `<li>📍 ${config.location.address || 'Address not set'}</li>
+                     <li>🌐 ${config.location.lat?.toFixed(4) || '--'}, ${config.location.lon?.toFixed(4) || '--'}</li>`;
+            } else {
+                document.getElementById('summaryLocationList').innerHTML = 
+                    '<li>⚠️ Location not configured (weather may not work)</li>';
+            }
         }
         
         async function saveConfiguration() {

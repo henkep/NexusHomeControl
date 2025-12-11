@@ -393,8 +393,73 @@ app.post('/api/shelly/room/:room', async (req, res) => {
 // PIAWARE LOCAL
 //=============================================================================
 
+// Test PiAware connection (for setup wizard)
+app.get('/api/test-piaware', async (req, res) => {
+    const url = req.query.url;
+    if (!url) {
+        return res.json({ success: false, error: 'No URL provided' });
+    }
+    
+    try {
+        const resp = await fetch(url, { timeout: 5000 });
+        if (!resp.ok) {
+            return res.json({ success: false, error: `HTTP ${resp.status}` });
+        }
+        const data = await resp.json();
+        if (data.aircraft !== undefined) {
+            return res.json({ success: true, aircraft: data.aircraft.length });
+        }
+        return res.json({ success: false, error: 'Invalid response format' });
+    } catch (err) {
+        return res.json({ success: false, error: err.message });
+    }
+});
+
+// Get flight tracking config status
+app.get('/api/flight-tracking/status', (req, res) => {
+    const ft = config.flightTracking || { enabled: false };
+    res.json({
+        enabled: ft.enabled,
+        source: ft.source || 'auto',
+        url: ft.url || null,
+        piaware: config.piaware || []
+    });
+});
+
 app.get('/api/aircraft', async (req, res) => {
-    // Check local file first
+    // Check if flight tracking is enabled
+    const flightConfig = config.flightTracking || { enabled: true }; // default true for backward compat
+    if (flightConfig.enabled === false) {
+        return res.json({ disabled: true, aircraft: [], messages: 0, now: Date.now() / 1000 });
+    }
+    
+    // If source is 'local', only check local file
+    if (flightConfig.source === 'local') {
+        try {
+            if (fs.existsSync('/run/dump1090-fa/aircraft.json')) {
+                const data = fs.readFileSync('/run/dump1090-fa/aircraft.json', 'utf8');
+                return res.json(JSON.parse(data));
+            }
+        } catch (e) {}
+        return res.json({ aircraft: [], messages: 0, now: Date.now() / 1000, error: 'Local PiAware not found' });
+    }
+    
+    // If source is 'remote', use the configured URL
+    if (flightConfig.source === 'remote' && flightConfig.url) {
+        try {
+            let url = flightConfig.url;
+            if (!url.includes('/data/aircraft.json')) {
+                url = url.replace(/\/$/, '') + '/data/aircraft.json';
+            }
+            const resp = await fetch(url);
+            if (resp.ok) {
+                return res.json(await resp.json());
+            }
+        } catch (e) {}
+        return res.json({ aircraft: [], messages: 0, now: Date.now() / 1000, error: 'Remote PiAware connection failed' });
+    }
+    
+    // Default: check local file first
     try {
         if (fs.existsSync('/run/dump1090-fa/aircraft.json')) {
             const data = fs.readFileSync('/run/dump1090-fa/aircraft.json', 'utf8');
@@ -406,9 +471,11 @@ app.get('/api/aircraft', async (req, res) => {
     const piawareConfig = config.piaware || [];
     for (const pi of piawareConfig) {
         try {
-            const url = pi.path 
-                ? pi.path 
-                : `http://${pi.ip}:${pi.port}/data/aircraft.json`;
+            const url = pi.url 
+                ? (pi.url.includes('/data/aircraft.json') ? pi.url : pi.url.replace(/\/$/, '') + '/data/aircraft.json')
+                : pi.path 
+                    ? pi.path 
+                    : `http://${pi.ip}:${pi.port || 8080}/data/aircraft.json`;
             const resp = await fetch(url);
             if (resp.ok) {
                 return res.json(await resp.json());

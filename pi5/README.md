@@ -2,13 +2,37 @@
 
 Run your NEXUS smart home dashboard locally on a Raspberry Pi 5 for instant response times.
 
-## Quick Install
+## 🚀 Quick Install (Recommended)
+
+### 1. Flash SD Card
+
+Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/):
+- Device: **Raspberry Pi 5**
+- OS: **Raspberry Pi OS Lite (64-bit)**
+- Settings: hostname=`nexus`, enable SSH, configure WiFi
+
+### 2. Boot & Install
 
 ```bash
+ssh pi@nexus.local
 curl -fsSL https://raw.githubusercontent.com/henkep/NexusHomeControl/main/pi5/install.sh | sudo bash
 ```
 
-## What's Included
+### 3. Configure
+
+Open **http://nexus.local/setup** in your browser.
+
+Done! 🎉
+
+---
+
+## 🔄 Zero-Touch Install (Advanced)
+
+Want it to install automatically on first boot? See [SETUP-GUIDE.md](SETUP-GUIDE.md) for the zero-touch method.
+
+---
+
+## 📦 What's Included
 
 - **Auto-Discovery**: Automatically finds Shelly, Honeywell, Ring, and PiAware devices
 - **Setup Wizard**: Web-based configuration at `http://<pi-ip>/setup`
@@ -29,8 +53,16 @@ curl -fsSL https://raw.githubusercontent.com/henkep/NexusHomeControl/main/pi5/in
 ## External Access (Cloudflare Tunnel)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/henkep/NexusHomeControl/main/pi5/setup-tunnel.sh | sudo bash
+sudo /opt/nexus/setup-tunnel.sh
 ```
+
+This sets up secure HTTPS access at your own domain (e.g., `https://home.yourdomain.com`).
+
+**Requirements:**
+- Free Cloudflare account
+- A domain added to Cloudflare
+
+See [SETUP-GUIDE.md](SETUP-GUIDE.md) for detailed custom domain instructions.
 
 ## Management Commands
 

@@ -1115,9 +1115,69 @@
                         <p style="color: var(--text-dim)">Loading devices...</p>
                     </div>
                     
-                    <h3 style="margin-top: 25px;">✈️ PiAware</h3>
-                    <div class="device-list-settings" id="settingsPiawareList">
-                        <p style="color: var(--text-dim)">Loading devices...</p>
+                    <h3 style="margin-top: 25px;">✈️ Flight Tracking</h3>
+                    <div id="settingsFlightTracking" class="device-item-settings" style="flex-direction: column; align-items: stretch;">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="settingsFlightEnabled" onchange="updateFlightTrackingSettings()" 
+                                       style="width: 18px; height: 18px; accent-color: var(--accent-cyan);">
+                                <span>Enable Flight Tracking</span>
+                            </label>
+                        </div>
+                        
+                        <div id="settingsFlightOptions" style="display: none;">
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Source</label>
+                                <select id="settingsFlightSource" class="settings-input" onchange="updateFlightTrackingSettings()">
+                                    <option value="auto">Auto-detect (network scan)</option>
+                                    <option value="local">Local (PiAware on this device)</option>
+                                    <option value="remote">Remote (custom URL)</option>
+                                </select>
+                            </div>
+                            
+                            <div id="settingsFlightUrl" style="display: none;">
+                                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">PiAware URL</label>
+                                <input type="text" id="settingsFlightUrlInput" class="settings-input" 
+                                       placeholder="http://192.168.1.50:8080">
+                            </div>
+                            
+                            <div id="settingsFlightStatus" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                <span style="color: var(--text-dim);">Status will appear here</span>
+                            </div>
+                            
+                            <button class="settings-btn settings-btn-primary" onclick="saveFlightTrackingSettings()" style="margin-top: 15px;">
+                                💾 Save Flight Settings
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-top: 25px;">📍 Home Location</h3>
+                    <div class="device-item-settings" style="flex-direction: column; align-items: stretch;">
+                        <div class="settings-form-group" style="margin-bottom: 10px;">
+                            <label class="settings-label">Display Address</label>
+                            <input type="text" class="settings-input" id="settingsAddress" placeholder="123 Main St, City, State">
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <div class="settings-form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="settings-label">Latitude</label>
+                                <input type="number" step="any" class="settings-input" id="settingsLat" placeholder="35.7796">
+                            </div>
+                            <div class="settings-form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="settings-label">Longitude</label>
+                                <input type="number" step="any" class="settings-input" id="settingsLon" placeholder="-78.6382">
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button class="settings-btn settings-btn-secondary" onclick="detectLocationSettings()">
+                                📍 Use My Location
+                            </button>
+                            <button class="settings-btn settings-btn-primary" onclick="saveLocationSettings()">
+                                💾 Save Location
+                            </button>
+                        </div>
+                        <p id="settingsLocationStatus" style="margin-top: 10px; font-size: 0.9rem;"></p>
                     </div>
                 </div>
                 
@@ -1230,7 +1290,7 @@
                         If the UI isn't working, you can edit config files directly via SSH:
                     </p>
                     <pre style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 0.85rem; overflow-x: auto; color: var(--accent-green);">
-ssh pi@nexus.local
+ssh <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b4c4ddf4dad1ccc1c79ad8dbd7d5d8">[email&#160;protected]</a>
 sudo nano /opt/nexus/config.json
 sudo nano /opt/nexus/.credentials.json
 docker restart nexus-api</pre>
@@ -1239,7 +1299,7 @@ docker restart nexus-api</pre>
             
             <div class="settings-footer">
                 <span class="fallback-note">
-                    💡 Fallback: SSH to pi@nexus.local and edit /opt/nexus/config.json
+                    💡 Fallback: SSH to <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0b7b624b656e737e78256764686a67">[email&#160;protected]</a> and edit /opt/nexus/config.json
                 </span>
                 <button class="settings-btn settings-btn-secondary" onclick="closeSettings()">Close</button>
             </div>
@@ -1302,7 +1362,7 @@ docker restart nexus-api</pre>
             </div>
 
             <!-- Flight Tracker -->
-            <div class="card flight-tracker">
+            <div class="card flight-tracker" id="flightTrackerCard">
                 <div class="card-header">
                     <span class="card-title">&#x2708;&#xFE0F; PiAware Radar</span>
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -1432,7 +1492,7 @@ docker restart nexus-api</pre>
         </div>
     </div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // ============================================
         // CONFIGURATION
         // ============================================
@@ -1491,7 +1551,27 @@ docker restart nexus-api</pre>
                 renderDeviceList('settingsShellyList', currentConfig.shelly || [], 'shelly');
                 renderDeviceList('settingsHoneywellList', currentConfig.honeywell || [], 'honeywell');
                 renderDeviceList('settingsRingList', currentConfig.ring || [], 'ring');
-                renderDeviceList('settingsPiawareList', currentConfig.piaware || [], 'piaware');
+                
+                // Load flight tracking settings
+                const ft = currentConfig.flightTracking || { enabled: true, source: 'auto' };
+                document.getElementById('settingsFlightEnabled').checked = ft.enabled !== false;
+                document.getElementById('settingsFlightSource').value = ft.source || 'auto';
+                document.getElementById('settingsFlightUrlInput').value = ft.url || '';
+                
+                // Show/hide options based on enabled state
+                document.getElementById('settingsFlightOptions').style.display = 
+                    ft.enabled !== false ? 'block' : 'none';
+                document.getElementById('settingsFlightUrl').style.display = 
+                    ft.source === 'remote' ? 'block' : 'none';
+                
+                // Show status
+                updateFlightStatusDisplay(ft, currentConfig.piaware || []);
+                
+                // Load location settings
+                const loc = currentConfig.location || {};
+                document.getElementById('settingsAddress').value = loc.address || '';
+                document.getElementById('settingsLat').value = loc.lat || '';
+                document.getElementById('settingsLon').value = loc.lon || '';
                 
                 // Load credential status
                 const credResp = await fetch('/api/settings/credentials/status');
@@ -1508,11 +1588,154 @@ docker restart nexus-api</pre>
                 document.getElementById('apiHealthStatus').textContent = 
                     `Status: ${health.status} | Uptime: ${Math.floor(health.uptime / 60)} minutes`;
                 
+                const ftStatus = currentConfig.flightTracking?.enabled !== false ? 'On' : 'Off';
                 document.getElementById('configSummary').textContent = 
-                    `Shelly: ${health.config?.shelly || 0} | Thermostats: ${health.config?.honeywell || 0} | Ring: ${health.config?.ring || 0} | PiAware: ${health.config?.piaware || 0}`;
+                    `Shelly: ${health.config?.shelly || 0} | Thermostats: ${health.config?.honeywell || 0} | Ring: ${health.config?.ring || 0} | Flight: ${ftStatus}`;
                 
             } catch (err) {
                 console.error('Failed to load settings:', err);
+            }
+        }
+        
+        function updateFlightStatusDisplay(ft, piaware) {
+            const statusEl = document.getElementById('settingsFlightStatus');
+            let html = '';
+            
+            if (ft.enabled === false) {
+                html = '<span style="color: var(--text-dim);">Flight tracking is disabled</span>';
+            } else if (ft.source === 'local') {
+                html = '<span style="color: var(--accent-cyan);">📍 Using local PiAware on this device</span>';
+            } else if (ft.source === 'remote' && ft.url) {
+                html = `<span style="color: var(--accent-cyan);">🌐 Remote: ${ft.url}</span>`;
+            } else if (piaware && piaware.length > 0) {
+                html = `<span style="color: var(--accent-green);">✅ Auto-detected: ${piaware[0].ip}:${piaware[0].port || 8080}</span>`;
+            } else {
+                html = '<span style="color: var(--accent-orange);">⚠️ No PiAware source configured</span>';
+            }
+            
+            statusEl.innerHTML = html;
+        }
+        
+        async function updateFlightTrackingSettings() {
+            const enabled = document.getElementById('settingsFlightEnabled').checked;
+            const source = document.getElementById('settingsFlightSource').value;
+            const url = document.getElementById('settingsFlightUrlInput').value;
+            
+            // Show/hide UI elements
+            document.getElementById('settingsFlightOptions').style.display = enabled ? 'block' : 'none';
+            document.getElementById('settingsFlightUrl').style.display = source === 'remote' ? 'block' : 'none';
+        }
+        
+        async function saveFlightTrackingSettings() {
+            const enabled = document.getElementById('settingsFlightEnabled').checked;
+            const source = document.getElementById('settingsFlightSource').value;
+            const url = document.getElementById('settingsFlightUrlInput').value;
+            
+            const newConfig = {
+                ...currentConfig,
+                flightTracking: {
+                    enabled,
+                    source,
+                    url: source === 'remote' ? url : null
+                }
+            };
+            
+            try {
+                const resp = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newConfig)
+                });
+                
+                if (resp.ok) {
+                    alert('Flight tracking settings saved! Refresh the page to see changes.');
+                    loadSettingsData();
+                } else {
+                    alert('Failed to save settings');
+                }
+            } catch (err) {
+                alert('Error saving settings: ' + err.message);
+            }
+        }
+        
+        function detectLocationSettings() {
+            const statusEl = document.getElementById('settingsLocationStatus');
+            
+            if (!navigator.geolocation) {
+                statusEl.innerHTML = '<span style="color: var(--accent-red);">❌ Geolocation not supported</span>';
+                return;
+            }
+            
+            statusEl.innerHTML = '<span style="color: var(--accent-cyan);">📍 Detecting location...</span>';
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lon = position.coords.longitude.toFixed(6);
+                    
+                    document.getElementById('settingsLat').value = lat;
+                    document.getElementById('settingsLon').value = lon;
+                    
+                    // Try reverse geocoding
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+                        );
+                        const data = await response.json();
+                        
+                        if (data.address) {
+                            const addr = data.address;
+                            const displayAddr = [
+                                addr.house_number,
+                                addr.road,
+                                addr.city || addr.town || addr.village,
+                                addr.state
+                            ].filter(Boolean).join(', ');
+                            
+                            document.getElementById('settingsAddress').value = displayAddr;
+                            statusEl.innerHTML = `<span style="color: var(--accent-green);">✅ Location detected</span>`;
+                        }
+                    } catch (e) {
+                        statusEl.innerHTML = `<span style="color: var(--accent-green);">✅ Coordinates set (enter address manually)</span>`;
+                    }
+                },
+                (error) => {
+                    statusEl.innerHTML = `<span style="color: var(--accent-red);">❌ ${error.message}</span>`;
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+        
+        async function saveLocationSettings() {
+            const address = document.getElementById('settingsAddress').value;
+            const lat = parseFloat(document.getElementById('settingsLat').value);
+            const lon = parseFloat(document.getElementById('settingsLon').value);
+            
+            if (!lat || !lon) {
+                alert('Please enter valid coordinates');
+                return;
+            }
+            
+            const newConfig = {
+                ...currentConfig,
+                location: { address, lat, lon }
+            };
+            
+            try {
+                const resp = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newConfig)
+                });
+                
+                if (resp.ok) {
+                    alert('Location saved! Refresh the page to update weather and header.');
+                    loadSettingsData();
+                } else {
+                    alert('Failed to save location');
+                }
+            } catch (err) {
+                alert('Error saving location: ' + err.message);
             }
         }
         
@@ -2272,9 +2495,38 @@ docker restart nexus-api</pre>
         // ============================================
         // FLIGHT TRACKER (PiAware Local Data)
         // ============================================
-        const HOME_LAT = 35.7915;
-        const HOME_LON = -78.7811;
+        // Location loaded from config (defaults for fallback)
+        let HOME_LAT = 35.7915;
+        let HOME_LON = -78.7811;
+        let HOME_ADDRESS = '332 Bridgegate Dr, Cary, NC 27519';
         const OVERHEAD_RADIUS_MILES = 1.5; // Highlight if within this radius
+        
+        // Load location from config
+        async function loadLocationConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                if (config.location) {
+                    if (config.location.lat && config.location.lon) {
+                        HOME_LAT = config.location.lat;
+                        HOME_LON = config.location.lon;
+                    }
+                    if (config.location.address) {
+                        HOME_ADDRESS = config.location.address;
+                        // Update header
+                        const addressEl = document.querySelector('.address');
+                        if (addressEl) {
+                            addressEl.innerHTML = `&#x1F4CD; ${HOME_ADDRESS}`;
+                        }
+                        // Update page title
+                        document.title = `NEXUS | ${HOME_ADDRESS.split(',')[0]}`;
+                    }
+                }
+            } catch (e) {
+                console.log('Using default location');
+            }
+        }
         
         // Calculate distance between two points in miles (Haversine formula)
         function getDistanceMiles(lat1, lon1, lat2, lon2) {
@@ -2288,13 +2540,44 @@ docker restart nexus-api</pre>
             return R * c;
         }
         
+        let flightTrackingEnabled = true; // Default to true for backward compat
+        
+        async function checkFlightTrackingStatus() {
+            try {
+                const response = await fetch('/api/flight-tracking/status');
+                const status = await response.json();
+                flightTrackingEnabled = status.enabled !== false; // Default true if not set
+                
+                const card = document.getElementById('flightTrackerCard');
+                if (!flightTrackingEnabled && card) {
+                    card.style.display = 'none';
+                }
+            } catch (e) {
+                // If endpoint doesn't exist, assume enabled (backward compat)
+                flightTrackingEnabled = true;
+            }
+        }
+        
         async function fetchFlights() {
+            // Skip if flight tracking is disabled
+            if (!flightTrackingEnabled) {
+                return;
+            }
+            
             const container = document.getElementById('flightContainer');
             const countEl = document.getElementById('flightCount');
             
             try {
                 const response = await fetch(CONFIG.PIAWARE_URL);
                 const data = await response.json();
+                
+                // Check if flight tracking is disabled in response
+                if (data.disabled) {
+                    const card = document.getElementById('flightTrackerCard');
+                    if (card) card.style.display = 'none';
+                    flightTrackingEnabled = false;
+                    return;
+                }
                 
                 // Filter aircraft with position data
                 const validAircraft = (data.aircraft || []).filter(ac => 
@@ -2455,8 +2738,7 @@ docker restart nexus-api</pre>
         // ============================================
         // WEATHER (National Weather Service)
         // ============================================
-        const WEATHER_LAT = 35.7915;
-        const WEATHER_LON = -78.7811;
+        // Uses HOME_LAT and HOME_LON from location config
         const WEATHER_REFRESH_MS = 600000; // 10 minutes
         let weatherGridUrl = null;
         let weatherForecastUrl = null;
@@ -2465,7 +2747,7 @@ docker restart nexus-api</pre>
         async function initWeather() {
             try {
                 // Get grid point info for this location
-                const pointsResponse = await fetch(`https://api.weather.gov/points/${WEATHER_LAT},${WEATHER_LON}`, {
+                const pointsResponse = await fetch(`https://api.weather.gov/points/${HOME_LAT},${HOME_LON}`, {
                     headers: { 'User-Agent': 'NEXUS Dashboard' }
                 });
                 const pointsData = await pointsResponse.json();
@@ -2785,13 +3067,20 @@ docker restart nexus-api</pre>
         // ============================================
         // INITIALIZE
         // ============================================
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load location config first (needed for weather and flight distance)
+            await loadLocationConfig();
+            
             connectSignalR();
             requestWakeLock();
             
-            // Start flight tracker
-            fetchFlights();
-            setInterval(fetchFlights, CONFIG.FLIGHT_REFRESH_MS);
+            // Check flight tracking status and start if enabled
+            checkFlightTrackingStatus().then(() => {
+                if (flightTrackingEnabled) {
+                    fetchFlights();
+                    setInterval(fetchFlights, CONFIG.FLIGHT_REFRESH_MS);
+                }
+            });
             
             // Start thermostat updates
             fetchThermostats();
@@ -2800,15 +3089,4 @@ docker restart nexus-api</pre>
             // Start weather updates
             initWeather();
             setInterval(fetchWeather, WEATHER_REFRESH_MS);
-            
-            // Start Shelly light status polling
-            fetchShellyStatus();
-            setInterval(fetchShellyStatus, SHELLY_REFRESH_MS);
-            
-            // Start Ring camera polling
-            fetchRingSnapshot();
-            setInterval(fetchRingSnapshot, RING_REFRESH_MS);
-        });
-    </script>
-</body>
-</html>
+      

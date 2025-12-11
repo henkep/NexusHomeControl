@@ -23,6 +23,8 @@ services:
   api:
     build: ./api
     container_name: nexus-api
+    # Use host network so API can scan local network and reach PiAware
+    network_mode: "host"
     environment:
       - CONFIG_PATH=/opt/nexus/config.json
       - CREDENTIALS_PATH=/opt/nexus/.credentials.json
@@ -30,16 +32,13 @@ services:
       - TCC_PASSWORD=${TCC_PASSWORD:-}
       - RING_REFRESH_TOKEN=${RING_REFRESH_TOKEN:-}
       - SHELLY_AUTH_KEY=${SHELLY_AUTH_KEY:-}
+      - PORT=3000
     volumes:
       - ./data:/opt/nexus
-      - /run/dump1090-fa:/run/dump1090-fa:ro
       - ./setup-wizard:/app/setup-wizard:ro
+      # If PiAware runs on THIS Pi, uncomment to use local file:
+      # - /run/dump1090-fa:/run/dump1090-fa:ro
     restart: unless-stopped
-    networks:
-      - nexus
-      - host-access
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   redis:
     image: redis:alpine
@@ -63,6 +62,4 @@ services:
 
 networks:
   nexus:
-    driver: bridge
-  host-access:
     driver: bridge
