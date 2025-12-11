@@ -815,6 +815,260 @@
             .ring-camera, .flight-tracker { grid-column: span 1; }
             .header { flex-direction: column; gap: 15px; text-align: center; }
         }
+
+        /* Settings Panel */
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .settings-overlay.open { display: flex; }
+        
+        .settings-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(0, 255, 136, 0.1));
+        }
+        
+        .settings-title {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .settings-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        .settings-close:hover { color: var(--accent-red); }
+        
+        .settings-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .settings-tab {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .settings-tab:hover { background: rgba(255,255,255,0.05); }
+        .settings-tab.active {
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.05);
+        }
+        
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 25px;
+        }
+        
+        .settings-section { display: none; }
+        .settings-section.active { display: block; }
+        
+        .settings-section h3 {
+            color: var(--accent-cyan);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .device-list-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .device-item-settings {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .device-icon-settings {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .device-info-settings {
+            flex: 1;
+        }
+        
+        .device-name-settings {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        
+        .device-details-settings {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .device-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .device-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        
+        .device-btn-edit {
+            background: rgba(0, 240, 255, 0.2);
+            color: var(--accent-cyan);
+        }
+        .device-btn-edit:hover { background: rgba(0, 240, 255, 0.3); }
+        
+        .device-btn-delete {
+            background: rgba(255, 51, 102, 0.2);
+            color: var(--accent-red);
+        }
+        .device-btn-delete:hover { background: rgba(255, 51, 102, 0.3); }
+        
+        .settings-form-group {
+            margin-bottom: 20px;
+        }
+        
+        .settings-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .settings-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+        
+        .settings-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .settings-btn-primary {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+        }
+        .settings-btn-primary:hover { background: #00d4e6; }
+        
+        .settings-btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+        .settings-btn-secondary:hover { background: rgba(255,255,255,0.2); }
+        
+        .settings-btn-danger {
+            background: rgba(255, 51, 102, 0.2);
+            color: var(--accent-red);
+        }
+        .settings-btn-danger:hover { background: rgba(255, 51, 102, 0.3); }
+        
+        .scan-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0, 240, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .scan-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .credential-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .credential-status.connected {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-green);
+        }
+        .credential-status.disconnected {
+            background: rgba(255, 51, 102, 0.2);
+            color: var(--accent-red);
+        }
+        
+        .settings-footer {
+            padding: 15px 25px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .fallback-note {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
     </style>
 </head>
 <body>
@@ -828,6 +1082,170 @@
         <button onclick="exitKiosk()">Exit Kiosk Mode</button>
     </div>
 
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settingsOverlay" onclick="if(event.target === this) closeSettings()">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <div class="settings-title">⚙️ Settings</div>
+                <button class="settings-close" onclick="closeSettings()">✕</button>
+            </div>
+            
+            <div class="settings-tabs">
+                <button class="settings-tab active" onclick="switchSettingsTab('devices')">📱 Devices</button>
+                <button class="settings-tab" onclick="switchSettingsTab('credentials')">🔑 Credentials</button>
+                <button class="settings-tab" onclick="switchSettingsTab('discovery')">🔍 Discovery</button>
+                <button class="settings-tab" onclick="switchSettingsTab('system')">🛠️ System</button>
+            </div>
+            
+            <div class="settings-content">
+                <!-- Devices Tab -->
+                <div class="settings-section active" id="settingsDevices">
+                    <h3>💡 Shelly Devices</h3>
+                    <div class="device-list-settings" id="settingsShellyList">
+                        <p style="color: var(--text-dim)">Loading devices...</p>
+                    </div>
+                    
+                    <h3 style="margin-top: 25px;">🌡️ Thermostats</h3>
+                    <div class="device-list-settings" id="settingsHoneywellList">
+                        <p style="color: var(--text-dim)">Loading devices...</p>
+                    </div>
+                    
+                    <h3 style="margin-top: 25px;">📹 Ring Devices</h3>
+                    <div class="device-list-settings" id="settingsRingList">
+                        <p style="color: var(--text-dim)">Loading devices...</p>
+                    </div>
+                    
+                    <h3 style="margin-top: 25px;">✈️ PiAware</h3>
+                    <div class="device-list-settings" id="settingsPiawareList">
+                        <p style="color: var(--text-dim)">Loading devices...</p>
+                    </div>
+                </div>
+                
+                <!-- Credentials Tab -->
+                <div class="settings-section" id="settingsCredentials">
+                    <h3>🔑 Service Credentials</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Update your credentials here. Leave fields blank to keep existing values.
+                    </p>
+                    
+                    <div class="settings-form-group">
+                        <label class="settings-label">
+                            Honeywell Email
+                            <span class="credential-status" id="honeywellStatus">checking...</span>
+                        </label>
+                        <input type="email" class="settings-input" id="settingsHoneywellEmail" placeholder="your@email.com">
+                    </div>
+                    
+                    <div class="settings-form-group">
+                        <label class="settings-label">Honeywell Password</label>
+                        <input type="password" class="settings-input" id="settingsHoneywellPassword" placeholder="••••••••">
+                    </div>
+                    
+                    <div class="settings-form-group">
+                        <label class="settings-label">
+                            Ring Refresh Token
+                            <span class="credential-status" id="ringStatus">checking...</span>
+                        </label>
+                        <input type="password" class="settings-input" id="settingsRingToken" placeholder="eyJhbG...">
+                        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 5px;">
+                            Get this by running: npx ring-auth-cli
+                        </p>
+                    </div>
+                    
+                    <div class="settings-form-group">
+                        <label class="settings-label">
+                            Shelly Cloud Auth Key
+                            <span class="credential-status" id="shellyStatus">checking...</span>
+                        </label>
+                        <input type="password" class="settings-input" id="settingsShellyAuth" placeholder="Optional - only for cloud control">
+                    </div>
+                    
+                    <button class="settings-btn settings-btn-primary" onclick="saveCredentials()">
+                        💾 Save Credentials
+                    </button>
+                </div>
+                
+                <!-- Discovery Tab -->
+                <div class="settings-section" id="settingsDiscovery">
+                    <h3>🔍 Device Discovery</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Scan your network to find new devices or verify existing ones.
+                    </p>
+                    
+                    <div id="scanStatus" style="display: none;" class="scan-status">
+                        <div class="scan-spinner"></div>
+                        <span id="scanStatusText">Scanning...</span>
+                    </div>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                        <button class="settings-btn settings-btn-secondary" onclick="rescanDevices('shelly')">
+                            🔍 Scan Shelly
+                        </button>
+                        <button class="settings-btn settings-btn-secondary" onclick="rescanDevices('honeywell')">
+                            🔍 Scan Thermostats
+                        </button>
+                        <button class="settings-btn settings-btn-secondary" onclick="rescanDevices('ring')">
+                            🔍 Scan Ring
+                        </button>
+                        <button class="settings-btn settings-btn-secondary" onclick="rescanDevices('piaware')">
+                            🔍 Scan PiAware
+                        </button>
+                    </div>
+                    
+                    <button class="settings-btn settings-btn-primary" onclick="rescanDevices('all')">
+                        🔍 Full Network Scan
+                    </button>
+                    
+                    <div id="discoveryResults" style="margin-top: 20px;"></div>
+                </div>
+                
+                <!-- System Tab -->
+                <div class="settings-section" id="settingsSystem">
+                    <h3>🛠️ System Information</h3>
+                    
+                    <div class="device-item-settings">
+                        <div class="device-info-settings">
+                            <div class="device-name-settings">API Health</div>
+                            <div class="device-details-settings" id="apiHealthStatus">Checking...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="device-item-settings" style="margin-top: 10px;">
+                        <div class="device-info-settings">
+                            <div class="device-name-settings">Configuration</div>
+                            <div class="device-details-settings" id="configSummary">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-top: 25px;">⚠️ Danger Zone</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Reset all device configuration. You'll need to run the setup wizard again.
+                    </p>
+                    <button class="settings-btn settings-btn-danger" onclick="confirmReset()">
+                        🗑️ Reset Configuration
+                    </button>
+                    
+                    <h3 style="margin-top: 25px;">📁 Manual Configuration</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 10px;">
+                        If the UI isn't working, you can edit config files directly via SSH:
+                    </p>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 0.85rem; overflow-x: auto; color: var(--accent-green);">
+ssh pi@nexus.local
+sudo nano /opt/nexus/config.json
+sudo nano /opt/nexus/.credentials.json
+docker restart nexus-api</pre>
+                </div>
+            </div>
+            
+            <div class="settings-footer">
+                <span class="fallback-note">
+                    💡 Fallback: SSH to pi@nexus.local and edit /opt/nexus/config.json
+                </span>
+                <button class="settings-btn settings-btn-secondary" onclick="closeSettings()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard">
         <header class="header">
             <div>
@@ -835,6 +1253,9 @@
                 <div class="address">&#x1F4CD; 332 Bridgegate Dr, Cary, NC 27519</div>
             </div>
             <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="kiosk-btn" onclick="openSettings()" title="Settings">
+                    <span>⚙️</span>
+                </button>
                 <button class="kiosk-btn" id="kioskBtn" onclick="toggleKiosk()" title="Enter Kiosk Mode">
                     <span>&#x1F4FA;</span>
                 </button>
@@ -1027,6 +1448,280 @@
             ROUTE_CACHE_HOURS: 4 // Cache routes for 4 hours
         };
         
+        // ============================================
+        // SETTINGS PANEL
+        // ============================================
+        let currentConfig = null;
+        
+        function openSettings() {
+            document.getElementById('settingsOverlay').classList.add('open');
+            loadSettingsData();
+        }
+        
+        function closeSettings() {
+            document.getElementById('settingsOverlay').classList.remove('open');
+        }
+        
+        function switchSettingsTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.textContent.toLowerCase().includes(tabName.substring(0, 4))) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update sections
+            document.querySelectorAll('.settings-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            const sectionId = 'settings' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+            const section = document.getElementById(sectionId);
+            if (section) section.classList.add('active');
+        }
+        
+        async function loadSettingsData() {
+            try {
+                // Load config
+                const configResp = await fetch('/api/config');
+                currentConfig = await configResp.json();
+                
+                // Render device lists
+                renderDeviceList('settingsShellyList', currentConfig.shelly || [], 'shelly');
+                renderDeviceList('settingsHoneywellList', currentConfig.honeywell || [], 'honeywell');
+                renderDeviceList('settingsRingList', currentConfig.ring || [], 'ring');
+                renderDeviceList('settingsPiawareList', currentConfig.piaware || [], 'piaware');
+                
+                // Load credential status
+                const credResp = await fetch('/api/settings/credentials/status');
+                const credStatus = await credResp.json();
+                
+                updateCredentialStatus('honeywellStatus', credStatus.honeywell);
+                updateCredentialStatus('ringStatus', credStatus.ring);
+                updateCredentialStatus('shellyStatus', credStatus.shelly);
+                
+                // Load system health
+                const healthResp = await fetch('/api/health');
+                const health = await healthResp.json();
+                
+                document.getElementById('apiHealthStatus').textContent = 
+                    `Status: ${health.status} | Uptime: ${Math.floor(health.uptime / 60)} minutes`;
+                
+                document.getElementById('configSummary').textContent = 
+                    `Shelly: ${health.config?.shelly || 0} | Thermostats: ${health.config?.honeywell || 0} | Ring: ${health.config?.ring || 0} | PiAware: ${health.config?.piaware || 0}`;
+                
+            } catch (err) {
+                console.error('Failed to load settings:', err);
+            }
+        }
+        
+        function renderDeviceList(containerId, devices, type) {
+            const container = document.getElementById(containerId);
+            
+            if (!devices || devices.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-dim)">No ${type} devices configured</p>`;
+                return;
+            }
+            
+            const icons = {
+                shelly: '💡',
+                honeywell: '🌡️',
+                ring: '📹',
+                piaware: '✈️'
+            };
+            
+            container.innerHTML = devices.map(device => `
+                <div class="device-item-settings">
+                    <div class="device-icon-settings">${device.icon || icons[type]}</div>
+                    <div class="device-info-settings">
+                        <div class="device-name-settings">${device.name || device.id}</div>
+                        <div class="device-details-settings">
+                            ${device.ip || ''} ${device.room ? `· ${device.room}` : ''} ${device.model ? `· ${device.model}` : ''}
+                        </div>
+                    </div>
+                    <div class="device-actions">
+                        <button class="device-btn device-btn-edit" onclick="editDevice('${type}', '${device.id || device.ip}')">
+                            ✏️ Edit
+                        </button>
+                        <button class="device-btn device-btn-delete" onclick="deleteDevice('${type}', '${device.id || device.ip}')">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateCredentialStatus(elementId, isConnected) {
+            const el = document.getElementById(elementId);
+            if (isConnected) {
+                el.className = 'credential-status connected';
+                el.textContent = '✓ Connected';
+            } else {
+                el.className = 'credential-status disconnected';
+                el.textContent = '✗ Not configured';
+            }
+        }
+        
+        async function saveCredentials() {
+            const credentials = {
+                honeywellEmail: document.getElementById('settingsHoneywellEmail').value || undefined,
+                honeywellPassword: document.getElementById('settingsHoneywellPassword').value || undefined,
+                ringToken: document.getElementById('settingsRingToken').value || undefined,
+                shellyAuth: document.getElementById('settingsShellyAuth').value || undefined
+            };
+            
+            // Remove undefined values
+            Object.keys(credentials).forEach(key => {
+                if (!credentials[key]) delete credentials[key];
+            });
+            
+            if (Object.keys(credentials).length === 0) {
+                alert('Please enter at least one credential to update');
+                return;
+            }
+            
+            try {
+                const resp = await fetch('/api/settings/credentials', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credentials)
+                });
+                
+                const result = await resp.json();
+                if (result.success) {
+                    alert('Credentials updated successfully!');
+                    // Clear form
+                    document.getElementById('settingsHoneywellEmail').value = '';
+                    document.getElementById('settingsHoneywellPassword').value = '';
+                    document.getElementById('settingsRingToken').value = '';
+                    document.getElementById('settingsShellyAuth').value = '';
+                    // Reload status
+                    loadSettingsData();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Failed to save credentials: ' + err.message);
+            }
+        }
+        
+        async function rescanDevices(type) {
+            const statusEl = document.getElementById('scanStatus');
+            const textEl = document.getElementById('scanStatusText');
+            const resultsEl = document.getElementById('discoveryResults');
+            
+            statusEl.style.display = 'flex';
+            textEl.textContent = `Scanning for ${type === 'all' ? 'all devices' : type}...`;
+            resultsEl.innerHTML = '';
+            
+            try {
+                const resp = await fetch(`/api/settings/rescan/${type}`, {
+                    method: 'POST'
+                });
+                const result = await resp.json();
+                
+                statusEl.style.display = 'none';
+                
+                if (result.success) {
+                    const devices = result.devices;
+                    let html = '<h4 style="color: var(--accent-green); margin-bottom: 10px;">✓ Scan Complete</h4>';
+                    
+                    if (type === 'all') {
+                        html += `<p>Found: Shelly (${devices.shelly?.length || 0}), Thermostats (${devices.honeywell?.length || 0}), Ring (${devices.ring?.length || 0}), PiAware (${devices.piaware?.length || 0})</p>`;
+                    } else {
+                        html += `<p>Found ${Array.isArray(devices) ? devices.length : 0} ${type} device(s)</p>`;
+                    }
+                    
+                    resultsEl.innerHTML = html;
+                    
+                    // Refresh device lists
+                    loadSettingsData();
+                } else {
+                    resultsEl.innerHTML = `<p style="color: var(--accent-red)">Error: ${result.error}</p>`;
+                }
+            } catch (err) {
+                statusEl.style.display = 'none';
+                resultsEl.innerHTML = `<p style="color: var(--accent-red)">Scan failed: ${err.message}</p>`;
+            }
+        }
+        
+        async function editDevice(type, id) {
+            const device = currentConfig[type]?.find(d => d.id === id || d.ip === id);
+            if (!device) return;
+            
+            const newName = prompt('Enter new name:', device.name || device.id);
+            if (!newName || newName === device.name) return;
+            
+            try {
+                const resp = await fetch('/api/settings/device', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, id, updates: { name: newName } })
+                });
+                
+                const result = await resp.json();
+                if (result.success) {
+                    loadSettingsData();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Failed to update device: ' + err.message);
+            }
+        }
+        
+        async function deleteDevice(type, id) {
+            if (!confirm('Are you sure you want to remove this device?')) return;
+            
+            try {
+                const resp = await fetch('/api/settings/device', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, id })
+                });
+                
+                const result = await resp.json();
+                if (result.success) {
+                    loadSettingsData();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Failed to delete device: ' + err.message);
+            }
+        }
+        
+        async function confirmReset() {
+            const confirmed = prompt('Type RESET to confirm configuration reset:');
+            if (confirmed !== 'RESET') {
+                alert('Reset cancelled');
+                return;
+            }
+            
+            try {
+                const resp = await fetch('/api/settings/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ confirm: 'RESET' })
+                });
+                
+                const result = await resp.json();
+                if (result.success) {
+                    alert('Configuration reset. Redirecting to setup wizard...');
+                    window.location.href = '/setup';
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Failed to reset: ' + err.message);
+            }
+        }
+        
+        // Check URL for settings=open parameter
+        if (new URLSearchParams(window.location.search).get('settings') === 'open') {
+            setTimeout(openSettings, 500);
+        }
         // ============================================
         // AIRCRAFT TYPE DATABASE
         // ============================================

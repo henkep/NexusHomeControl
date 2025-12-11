@@ -61,8 +61,16 @@ const SHELLY_AUTH_KEY = credentials.shellyAuth || process.env.SHELLY_AUTH_KEY;
 // SETUP WIZARD ENDPOINTS
 //=============================================================================
 
-// Serve setup wizard
+// Serve setup wizard - ONLY if no config exists (security!)
 app.get('/setup', (req, res) => {
+    const configExists = fs.existsSync(CONFIG_PATH) && 
+        (config.shelly?.length > 0 || config.honeywell?.length > 0 || config.ring?.length > 0);
+    
+    if (configExists) {
+        // Config exists - redirect to dashboard settings
+        return res.redirect('/?settings=open');
+    }
+    
     res.sendFile(path.join(__dirname, '../setup-wizard/index.html'));
 });
 
@@ -145,6 +153,140 @@ app.post('/api/config', (req, res) => {
 // Get current configuration
 app.get('/api/config', (req, res) => {
     res.json(config);
+});
+
+//=============================================================================
+// SETTINGS API (for in-dashboard configuration)
+//=============================================================================
+
+// Add a device
+app.post('/api/settings/device', (req, res) => {
+    const { type, device } = req.body;
+    
+    if (!['shelly', 'honeywell', 'ring', 'piaware'].includes(type)) {
+        return res.json({ success: false, error: 'Invalid device type' });
+    }
+    
+    if (!config[type]) config[type] = [];
+    config[type].push(device);
+    saveConfig(config);
+    
+    res.json({ success: true, config });
+});
+
+// Update a device
+app.put('/api/settings/device', (req, res) => {
+    const { type, id, updates } = req.body;
+    
+    if (!config[type]) {
+        return res.json({ success: false, error: 'Device type not found' });
+    }
+    
+    const index = config[type].findIndex(d => d.id === id || d.ip === id);
+    if (index === -1) {
+        return res.json({ success: false, error: 'Device not found' });
+    }
+    
+    config[type][index] = { ...config[type][index], ...updates };
+    saveConfig(config);
+    
+    res.json({ success: true, config });
+});
+
+// Remove a device
+app.delete('/api/settings/device', (req, res) => {
+    const { type, id } = req.body;
+    
+    if (!config[type]) {
+        return res.json({ success: false, error: 'Device type not found' });
+    }
+    
+    config[type] = config[type].filter(d => d.id !== id && d.ip !== id);
+    saveConfig(config);
+    
+    res.json({ success: true, config });
+});
+
+// Update credentials
+app.put('/api/settings/credentials', (req, res) => {
+    const { honeywellEmail, honeywellPassword, ringToken, shellyAuth } = req.body;
+    
+    const newCreds = { ...credentials };
+    if (honeywellEmail !== undefined) newCreds.honeywellEmail = honeywellEmail;
+    if (honeywellPassword !== undefined) newCreds.honeywellPassword = honeywellPassword;
+    if (ringToken !== undefined) newCreds.ringToken = ringToken;
+    if (shellyAuth !== undefined) newCreds.shellyAuth = shellyAuth;
+    
+    saveCredentials(newCreds);
+    credentials = newCreds;
+    
+    // Clear cached API instances so they reinitialize with new creds
+    ringApi = null;
+    honeywellCookieJar = {};
+    
+    res.json({ success: true, message: 'Credentials updated' });
+});
+
+// Re-run discovery for a specific type
+app.post('/api/settings/rescan/:type', async (req, res) => {
+    const { type } = req.params;
+    
+    try {
+        let results;
+        switch (type) {
+            case 'shelly':
+                results = await discovery.discoverShelly();
+                break;
+            case 'honeywell':
+                results = await discovery.discoverHoneywell(
+                    credentials.honeywellEmail || TCC_USERNAME,
+                    credentials.honeywellPassword || TCC_PASSWORD
+                );
+                break;
+            case 'ring':
+                results = await discovery.discoverRing(credentials.ringToken || RING_REFRESH_TOKEN);
+                break;
+            case 'piaware':
+                results = await discovery.discoverPiAware();
+                break;
+            case 'all':
+                results = await discovery.discoverAll({
+                    honeywellUsername: credentials.honeywellEmail || TCC_USERNAME,
+                    honeywellPassword: credentials.honeywellPassword || TCC_PASSWORD,
+                    ringRefreshToken: credentials.ringToken || RING_REFRESH_TOKEN
+                });
+                break;
+            default:
+                return res.json({ success: false, error: 'Unknown device type' });
+        }
+        
+        res.json({ success: true, devices: results });
+    } catch (err) {
+        res.json({ success: false, error: err.message });
+    }
+});
+
+// Get credential status (not the actual values!)
+app.get('/api/settings/credentials/status', (req, res) => {
+    res.json({
+        honeywell: !!(credentials.honeywellEmail && credentials.honeywellPassword) || !!(TCC_USERNAME && TCC_PASSWORD),
+        ring: !!(credentials.ringToken || RING_REFRESH_TOKEN),
+        shelly: !!(credentials.shellyAuth || SHELLY_AUTH_KEY)
+    });
+});
+
+// Reset config (for troubleshooting)
+app.post('/api/settings/reset', (req, res) => {
+    const { confirm } = req.body;
+    
+    if (confirm !== 'RESET') {
+        return res.json({ success: false, error: 'Confirmation required' });
+    }
+    
+    config = { shelly: [], honeywell: [], ring: [], piaware: [] };
+    saveConfig(config);
+    
+    res.json({ success: true, message: 'Configuration reset. Visit /setup to reconfigure.' });
 });
 
 //=============================================================================
