@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEXUS | 332 Bridgegate Dr</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #0f1623;
+            --bg-card: rgba(15, 25, 45, 0.85);
+            --accent-cyan: #00f0ff;
+            --accent-blue: #0066ff;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #ff6b35;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-yellow: #ffd93d;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-dim: rgba(255, 255, 255, 0.4);
+            --border-glow: rgba(0, 240, 255, 0.3);
+            --shadow-glow: 0 0 30px rgba(0, 240, 255, 0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .bg-glow-1 { background: var(--accent-cyan); top: -200px; left: -200px; }
+        .bg-glow-2 { background: var(--accent-purple); bottom: -200px; right: -200px; }
+
+        .dashboard {
+            position: relative;
+            z-index: 1;
+            padding: 15px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--bg-card);
+            border-radius: 15px;
+            border: 1px solid var(--border-glow);
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .address {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-badge.connected {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .status-badge.disconnected {
+            background: rgba(255, 51, 102, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .clock {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 500;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+            font-variant-numeric: tabular-nums;
+            min-width: 180px;
+            text-align: right;
+        }
+
+        .clock-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            border: 1px solid var(--border-glow);
+            padding: 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-glow);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Ring Camera Styles */
+        .ring-camera { grid-column: span 2; }
+        .ring-container { padding: 10px; }
+        .ring-snapshot-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .ring-snapshot {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .ring-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        .ring-info {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 10px;
+        }
+        .ring-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .ring-info-item span:first-child { font-size: 1.1rem; }
+        .ring-status { font-size: 0.8rem; color: var(--text-dim); }
+        .ring-status.live { color: var(--accent-green); }
+        .ring-motion {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--accent-red);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .weather-display { padding: 15px; }
+        .weather-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .weather-icon-large {
+            font-size: 4rem;
+            line-height: 1;
+            filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.3));
+        }
+        .weather-current { text-align: left; }
+        .weather-temp {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+            line-height: 1;
+        }
+        .weather-condition { 
+            font-size: 1rem; 
+            color: var(--text-secondary); 
+            margin-top: 4px;
+            text-transform: capitalize;
+        }
+        .weather-stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(0, 240, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+        }
+        .weather-stat { text-align: center; }
+        .weather-stat-icon { font-size: 1.2rem; margin-bottom: 4px; }
+        .weather-stat-value { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+        .weather-stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+        .weather-status { font-size: 0.8rem; color: var(--text-dim); }
+        .weather-forecast {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding-top: 5px;
+        }
+        .forecast-item {
+            text-align: center;
+            flex: 1;
+            padding: 5px;
+        }
+        .forecast-day { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; }
+        .forecast-icon { font-size: 1.5rem; margin: 5px 0; }
+        .forecast-temps { font-size: 0.85rem; }
+        .forecast-high { font-weight: 600; color: var(--text-primary); }
+        .forecast-low { color: var(--text-dim); }
+
+        /* Recipe Widget */
+        .recipe-card { cursor: pointer; transition: all 0.3s ease; }
+        .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent-orange); }
+        .recipe-widget {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+        .recipe-icon { font-size: 3rem; margin-bottom: 10px; }
+        .recipe-text { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+        .recipe-subtext { font-size: 0.85rem; color: var(--text-dim); margin-top: 5px; }
+
+        .room-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .room-btn {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            background: rgba(0, 240, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .room-btn:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--accent-cyan); }
+        .room-btn.active { background: rgba(0, 255, 136, 0.15); border-color: var(--accent-green); }
+        .room-icon { font-size: 1.4rem; margin-bottom: 5px; }
+        .room-name { font-size: 0.9rem; font-weight: 600; }
+
+        /* Kitchen Lights */
+        .kitchen-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+        .kitchen-btn {
+            padding: 15px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            background: rgba(0, 240, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .kitchen-btn:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--accent-cyan); }
+        .kitchen-btn.active { background: rgba(255, 200, 50, 0.2); border-color: var(--accent-yellow); box-shadow: 0 0 15px rgba(255, 200, 50, 0.3); }
+        .kitchen-btn.loading { opacity: 0.5; pointer-events: none; }
+        .kitchen-icon { font-size: 1.6rem; margin-bottom: 6px; }
+        .kitchen-name { font-size: 0.95rem; font-weight: 600; }
+        .kitchen-power { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+        .kitchen-all { border-color: var(--accent-purple); }
+        .kitchen-all.active { background: rgba(139, 92, 246, 0.2); border-color: var(--accent-purple); box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
+        .shelly-status { font-size: 0.8rem; color: var(--text-dim); }
+
+        .scene-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .scene-btn {
+            padding: 15px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            background: rgba(0, 240, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .scene-btn:hover { background: rgba(0, 240, 255, 0.15); border-color: var(--accent-cyan); transform: translateY(-2px); }
+        .scene-icon { font-size: 1.6rem; margin-bottom: 6px; }
+        .scene-name { font-size: 0.95rem; font-weight: 600; }
+
+        .thermostat { display: flex; flex-direction: column; align-items: center; padding: 15px; }
+        .thermostat-zones { display: flex; flex-direction: column; gap: 12px; padding: 10px; }
+        .thermostat-zone {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 12px;
+            border-left: 3px solid var(--accent-cyan);
+        }
+        .thermostat-zone.heating { border-left-color: var(--accent-orange); }
+        .thermostat-zone.cooling { border-left-color: var(--accent-blue); }
+        .zone-temps {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 70px;
+        }
+        .zone-current {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            line-height: 1;
+        }
+        .zone-target {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        .zone-info { flex: 1; }
+        .zone-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .zone-details {
+            display: flex;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .zone-mode {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .zone-mode.heat { background: rgba(255, 107, 53, 0.2); color: var(--accent-orange); }
+        .zone-mode.cool { background: rgba(0, 102, 255, 0.2); color: var(--accent-blue); }
+        .zone-mode.auto { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .zone-mode.off { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); }
+        .zone-mode.heating { background: rgba(255, 107, 53, 0.3); color: var(--accent-orange); }
+        .zone-mode.cooling { background: rgba(0, 102, 255, 0.3); color: var(--accent-blue); }
+        .thermostat-loading { text-align: center; padding: 30px; color: var(--text-secondary); }
+        .thermostat-status { font-size: 0.8rem; color: var(--text-dim); }
+        .thermostat-outdoor {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            margin-top: 8px;
+            border-top: 1px solid rgba(0, 240, 255, 0.1);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .thermostat-outdoor span { color: var(--text-primary); font-weight: 600; }
+        .thermostat-dial {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: conic-gradient(from 180deg, var(--accent-cyan), var(--accent-green), var(--accent-orange), var(--accent-red), var(--accent-cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .thermostat-inner {
+            width: 105px;
+            height: 105px;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .thermostat-temp { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 700; color: var(--accent-cyan); }
+        .thermostat-mode { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 500; }
+        .thermostat-controls { display: flex; gap: 15px; margin-top: 12px; }
+        .temp-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border-glow);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .temp-btn:hover { background: var(--accent-cyan); color: var(--bg-primary); }
+
+        /* Flight Tracker Styles */
+        .flight-tracker { grid-column: span 2; }
+        .flight-container { max-height: 380px; overflow-y: auto; }
+        .flight-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-purple);
+            transition: all 0.3s ease;
+        }
+        .flight-item.overhead {
+            background: rgba(0, 255, 136, 0.15);
+            border-left-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            animation: pulse-overhead 2s ease-in-out infinite;
+        }
+        @keyframes pulse-overhead {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 136, 0.5); }
+        }
+        .overhead-badge {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .flight-icon {
+            font-size: 1.8rem;
+            transform: rotate(45deg);
+        }
+        .flight-info { flex: 1; }
+        .flight-callsign {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+        .flight-route {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 3px 0;
+        }
+        .flight-details {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        .flight-detail {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        .flight-detail span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .flight-altitude {
+            text-align: right;
+        }
+        .flight-alt-value {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+        }
+        .flight-alt-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        .no-flights {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        .flight-count {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .online-badge {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .offline-badge {
+            background: rgba(255, 51, 102, 0.15);
+            color: var(--accent-red);
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 3px; }
+
+        /* Kiosk Mode */
+        .kiosk-btn {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+        .kiosk-btn:hover {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--accent-cyan);
+        }
+        .kiosk-btn.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: var(--accent-green);
+        }
+        
+        body.kiosk-mode {
+            cursor: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+        body.kiosk-mode .kiosk-btn { display: none; }
+        body.kiosk-mode .header { padding: 10px 20px; }
+        body.kiosk-mode.show-cursor { cursor: default; }
+        
+        .kiosk-exit-hint {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 15px;
+            padding: 30px 50px;
+            z-index: 9999;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .kiosk-exit-hint h2 { color: var(--accent-cyan); margin-bottom: 15px; }
+        .kiosk-exit-hint p { color: var(--text-secondary); margin-bottom: 20px; }
+        .kiosk-exit-hint button {
+            background: var(--accent-red);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Tablet Landscape (10" tablets ~1280x800) - NO SCROLL LAYOUT */
+        @media (min-width: 769px) and (max-width: 1400px) and (max-height: 900px) {
+            html, body {
+                overflow: hidden;
+                height: 100vh;
+            }
+            
+            .dashboard {
+                padding: 6px;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            
+            .header {
+                padding: 6px 12px;
+                margin-bottom: 6px;
+                flex-shrink: 0;
+            }
+            .logo { font-size: 1.2rem; }
+            .address { font-size: 0.65rem; }
+            .clock { font-size: 1.5rem; }
+            .clock-date { font-size: 0.65rem; }
+            .kiosk-btn { padding: 4px 6px; font-size: 0.9rem; }
+            
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: 1fr 1fr;
+                gap: 6px;
+                flex: 1;
+                min-height: 0;
+            }
+            
+            .card {
+                padding: 8px;
+                border-radius: 8px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .card-header {
+                margin-bottom: 6px;
+                padding-bottom: 4px;
+                flex-shrink: 0;
+            }
+            .card-title { font-size: 0.7rem; }
+            
+            /* Ring camera - top left 2x1 */
+            .ring-camera {
+                grid-column: span 2;
+                grid-row: span 1;
+            }
+            .ring-container {
+                padding: 0;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .ring-snapshot-wrapper {
+                flex: 1;
+                min-height: 0;
+                aspect-ratio: auto;
+                margin-bottom: 4px;
+            }
+            .ring-snapshot {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .ring-info {
+                padding: 4px 8px;
+                flex-shrink: 0;
+            }
+            .ring-info-item { font-size: 0.65rem; }
+            
+            /* Flight tracker - top right 2x1 */
+            .flight-tracker {
+                grid-column: span 2;
+                grid-row: span 1;
+            }
+            .flight-container {
+                flex: 1;
+                overflow-y: auto;
+                min-height: 0;
+            }
+            .flight-item {
+                padding: 4px 6px;
+                margin-bottom: 3px;
+                gap: 6px;
+            }
+            .flight-icon { font-size: 1rem; }
+            .flight-callsign { font-size: 0.75rem; }
+            .flight-route { font-size: 0.65rem; }
+            .flight-details { gap: 6px; }
+            .flight-detail { font-size: 0.6rem; }
+            .flight-alt-value { font-size: 0.85rem; }
+            .flight-count { font-size: 0.6rem; padding: 2px 6px; }
+            
+            /* Weather - bottom row */
+            .weather-icon-large { font-size: 1.5rem; }
+            .weather-temp { font-size: 1.8rem; }
+            .weather-condition { font-size: 0.65rem; margin-bottom: 4px; }
+            .weather-stats { gap: 6px; margin-bottom: 4px; }
+            .weather-stat-value { font-size: 0.8rem; }
+            .weather-stat-label { font-size: 0.55rem; }
+            .weather-forecast { gap: 3px; margin-top: 4px; }
+            .forecast-item { padding: 3px; min-width: 40px; }
+            .forecast-day { font-size: 0.55rem; }
+            .forecast-icon { font-size: 0.85rem; }
+            .forecast-temps { font-size: 0.55rem; }
+            
+            /* Climate/Thermostat - bottom row */
+            .thermostat-zones {
+                padding: 0;
+                gap: 4px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .thermostat-zone {
+                padding: 6px 8px;
+                gap: 8px;
+                flex: 1;
+            }
+            .zone-current { font-size: 1.2rem; }
+            .zone-target { font-size: 0.6rem; }
+            .zone-name { font-size: 0.7rem; }
+            .zone-details { font-size: 0.6rem; gap: 4px; }
+            .zone-details span { padding: 1px 4px; }
+            .thermostat-outdoor { font-size: 0.6rem; padding: 4px; }
+            
+            /* Kitchen lights - bottom row */
+            .kitchen-grid {
+                padding: 0;
+                gap: 4px;
+                flex: 1;
+            }
+            .kitchen-btn {
+                padding: 6px 4px;
+            }
+            .kitchen-icon { font-size: 1rem; margin-bottom: 2px; }
+            .kitchen-name { font-size: 0.65rem; }
+            .kitchen-power { font-size: 0.55rem; }
+            
+            /* Scenes - bottom row */
+            .scene-grid {
+                gap: 4px;
+                flex: 1;
+            }
+            .scene-btn {
+                padding: 6px 4px;
+            }
+            .scene-icon { font-size: 1rem; margin-bottom: 2px; }
+            .scene-name { font-size: 0.65rem; }
+            
+            /* Hide recipe card on tablet to save space */
+            .recipe-card { display: none; }
+        }
+        
+        /* Tablet Portrait - stack everything */
+        @media (min-width: 600px) and (max-width: 900px) and (orientation: portrait) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .ring-camera, .flight-tracker { grid-column: span 2; }
+        }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .ring-camera, .flight-tracker { grid-column: span 1; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    
+    <div class="kiosk-exit-hint" id="kioskExitHint">
+        <h2>🔒 Kiosk Mode Active</h2>
+        <p>Triple-tap anywhere to show this menu</p>
+        <button onclick="exitKiosk()">Exit Kiosk Mode</button>
+    </div>
+
+    <div class="dashboard">
+        <header class="header">
+            <div>
+                <div class="logo">NEXUS</div>
+                <div class="address">&#x1F4CD; 332 Bridgegate Dr, Cary, NC 27519</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="kiosk-btn" id="kioskBtn" onclick="toggleKiosk()" title="Enter Kiosk Mode">
+                    <span>&#x1F4FA;</span>
+                </button>
+                <button class="kiosk-btn" onclick="window.location.href='/.auth/logout'" title="Logout">
+                    <span>&#x1F6AA;</span>
+                </button>
+            </div>
+            <div>
+                <div class="clock" id="clock">00:00:00</div>
+                <div class="clock-date" id="clockDate">Loading...</div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Ring Doorbell Camera -->
+            <div class="card ring-camera">
+                <div class="card-header">
+                    <span class="card-title">🚪 Front Door</span>
+                    <span class="ring-status" id="ringStatus">Loading...</span>
+                </div>
+                <div class="ring-container" id="ringContainer">
+                    <div class="ring-snapshot-wrapper">
+                        <img id="ringSnapshot" class="ring-snapshot" src="" alt="Doorbell Camera" style="display: none;">
+                        <div class="ring-placeholder" id="ringPlaceholder">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">🔔</div>
+                            <div>Loading camera...</div>
+                        </div>
+                    </div>
+                    <div class="ring-info">
+                        <div class="ring-info-item">
+                            <span>🔋</span>
+                            <span id="ringBattery">--%</span>
+                        </div>
+                        <div class="ring-info-item">
+                            <span>📶</span>
+                            <span id="ringWifi">--</span>
+                        </div>
+                        <div class="ring-info-item">
+                            <span>🕐</span>
+                            <span id="ringLastUpdate">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flight Tracker -->
+            <div class="card flight-tracker">
+                <div class="card-header">
+                    <span class="card-title">&#x2708;&#xFE0F; PiAware Radar</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span id="routeStatus" class="flight-count" style="display: none;">&#x1F50D; Looking up routes...</span>
+                        <span id="flightCount" class="flight-count">0 aircraft</span>
+                    </div>
+                </div>
+                <div class="flight-container" id="flightContainer">
+                    <div class="no-flights">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">&#x2708;&#xFE0F;</div>
+                        Connecting to PiAware...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🌡️ Weather</span>
+                    <span class="weather-status" id="weatherStatus"></span>
+                </div>
+                <div class="weather-display" id="weatherDisplay">
+                    <div class="weather-main">
+                        <div class="weather-icon-large" id="weatherIconLarge">⛅</div>
+                        <div class="weather-current">
+                            <div class="weather-temp" id="weatherTemp">--°</div>
+                            <div class="weather-condition" id="weatherCondition">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="weather-stats">
+                        <div class="weather-stat">
+                            <div class="weather-stat-icon">💧</div>
+                            <div class="weather-stat-value" id="weatherHumidity">--%</div>
+                            <div class="weather-stat-label">Humidity</div>
+                        </div>
+                        <div class="weather-stat">
+                            <div class="weather-stat-icon">💨</div>
+                            <div class="weather-stat-value" id="weatherWind">-- mph</div>
+                            <div class="weather-stat-label">Wind</div>
+                        </div>
+                        <div class="weather-stat">
+                            <div class="weather-stat-icon">🌡️</div>
+                            <div class="weather-stat-value" id="weatherFeelsLike">--°</div>
+                            <div class="weather-stat-label">Feels Like</div>
+                        </div>
+                    </div>
+                    <div class="weather-forecast" id="weatherForecast"></div>
+                </div>
+            </div>
+
+            <!-- Kitchen Lights -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🍳 Kitchen Lights</span>
+                    <span class="shelly-status" id="shellyStatus"></span>
+                </div>
+                <div class="kitchen-grid">
+                    <div class="kitchen-btn" id="btn-stovetop" onclick="toggleShelly('stovetop')">
+                        <div class="kitchen-icon">🔥</div>
+                        <div class="kitchen-name">Stovetop</div>
+                        <div class="kitchen-power" id="power-stovetop"></div>
+                    </div>
+                    <div class="kitchen-btn" id="btn-counter" onclick="toggleShelly('counter')">
+                        <div class="kitchen-icon">🔪</div>
+                        <div class="kitchen-name">Counter</div>
+                        <div class="kitchen-power" id="power-counter"></div>
+                    </div>
+                    <div class="kitchen-btn" id="btn-sink" onclick="toggleShelly('sink')">
+                        <div class="kitchen-icon">🚰</div>
+                        <div class="kitchen-name">Sink</div>
+                        <div class="kitchen-power" id="power-sink"></div>
+                    </div>
+                    <div class="kitchen-btn kitchen-all" id="btn-all" onclick="toggleShellyAll()">
+                        <div class="kitchen-icon">💡</div>
+                        <div class="kitchen-name">All</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Climate -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">&#x1F321; Climate</span>
+                    <span class="thermostat-status" id="thermostatStatus"></span>
+                </div>
+                <div class="thermostat-zones" id="thermostatZones">
+                    <div class="thermostat-loading">Loading thermostats...</div>
+                </div>
+            </div>
+
+            <!-- Quick Scenes -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">&#x2728; Scenes</span>
+                </div>
+                <div class="scene-grid">
+                    <div class="scene-btn" onclick="activateScene('morning')">
+                        <div class="scene-icon">&#x1F305;</div>
+                        <div class="scene-name">Morning</div>
+                    </div>
+                    <div class="scene-btn" onclick="activateScene('bedtime')">
+                        <div class="scene-icon">&#x1F319;</div>
+                        <div class="scene-name">Bedtime</div>
+                    </div>
+                    <div class="scene-btn" onclick="activateScene('movie')">
+                        <div class="scene-icon">&#x1F3AC;</div>
+                        <div class="scene-name">Movie</div>
+                    </div>
+                    <div class="scene-btn" onclick="activateScene('away')">
+                        <div class="scene-icon">&#x1F3E0;</div>
+                        <div class="scene-name">Away</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipes -->
+            <div class="card recipe-card" onclick="openRecipes()">
+                <div class="card-header">
+                    <span class="card-title">📖 Recipes</span>
+                </div>
+                <div class="recipe-widget">
+                    <div class="recipe-icon">🍳</div>
+                    <div class="recipe-text">Tap to open Tandoor</div>
+                    <div class="recipe-subtext">Manage your recipes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const CONFIG = {
+            SIGNALR_URL: 'https://nexus-alexa-bridge-45799.azurewebsites.net/api',
+            DEMO_MODE: false,
+            // Flight tracker config - Local PiAware
+            PIAWARE_URL: '/api/aircraft',
+            FLIGHT_REFRESH_MS: 5000, // 5 seconds
+            // FlightAware route lookup via Azure proxy
+            FLIGHTAWARE_PROXY_URL: 'https://nexus-alexa-bridge-45799.azurewebsites.net/api/flightaware-proxy',
+            ROUTE_LOOKUP_ENABLED: true,
+            ROUTE_CACHE_HOURS: 4 // Cache routes for 4 hours
+        };
+        
+        // ============================================
+        // AIRCRAFT TYPE DATABASE
+        // ============================================
+        const AIRCRAFT_TYPES = {
+            // Airbus
+            'A318': 'Airbus A318', 'A319': 'Airbus A319', 'A320': 'Airbus A320', 'A321': 'Airbus A321',
+            'A20N': 'Airbus A320neo', 'A21N': 'Airbus A321neo', 'A19N': 'Airbus A319neo',
+            'A332': 'Airbus A330-200', 'A333': 'Airbus A330-300', 'A339': 'Airbus A330-900neo',
+            'A342': 'Airbus A340-200', 'A343': 'Airbus A340-300', 'A345': 'Airbus A340-500', 'A346': 'Airbus A340-600',
+            'A359': 'Airbus A350-900', 'A35K': 'Airbus A350-1000',
+            'A388': 'Airbus A380-800',
+            // Boeing
+            'B712': 'Boeing 717-200',
+            'B731': 'Boeing 737-100', 'B732': 'Boeing 737-200', 'B733': 'Boeing 737-300',
+            'B734': 'Boeing 737-400', 'B735': 'Boeing 737-500', 'B736': 'Boeing 737-600',
+            'B737': 'Boeing 737-700', 'B738': 'Boeing 737-800', 'B739': 'Boeing 737-900',
+            'B37M': 'Boeing 737 MAX 7', 'B38M': 'Boeing 737 MAX 8', 'B39M': 'Boeing 737 MAX 9', 'B3XM': 'Boeing 737 MAX 10',
+            'B741': 'Boeing 747-100', 'B742': 'Boeing 747-200', 'B743': 'Boeing 747-300',
+            'B744': 'Boeing 747-400', 'B748': 'Boeing 747-8', 'B74S': 'Boeing 747SP',
+            'B752': 'Boeing 757-200', 'B753': 'Boeing 757-300',
+            'B762': 'Boeing 767-200', 'B763': 'Boeing 767-300', 'B764': 'Boeing 767-400',
+            'B772': 'Boeing 777-200', 'B77L': 'Boeing 777-200LR', 'B773': 'Boeing 777-300',
+            'B77W': 'Boeing 777-300ER', 'B778': 'Boeing 777-8', 'B779': 'Boeing 777-9',
+            'B788': 'Boeing 787-8', 'B789': 'Boeing 787-9', 'B78X': 'Boeing 787-10',
+            // Embraer
+            'E135': 'Embraer ERJ-135', 'E140': 'Embraer ERJ-140', 'E145': 'Embraer ERJ-145',
+            'E170': 'Embraer E170', 'E175': 'Embraer E175', 'E190': 'Embraer E190', 'E195': 'Embraer E195',
+            'E75L': 'Embraer E175 Long', 'E75S': 'Embraer E175',
+            'E290': 'Embraer E190-E2', 'E295': 'Embraer E195-E2',
+            // Bombardier / Canadair
+            'CRJ1': 'Bombardier CRJ-100', 'CRJ2': 'Bombardier CRJ-200', 'CRJ7': 'Bombardier CRJ-700',
+            'CRJ9': 'Bombardier CRJ-900', 'CRJX': 'Bombardier CRJ-1000',
+            'DH8A': 'Dash 8-100', 'DH8B': 'Dash 8-200', 'DH8C': 'Dash 8-300', 'DH8D': 'Dash 8-400',
+            'BCS1': 'Airbus A220-100', 'BCS3': 'Airbus A220-300', 'A220': 'Airbus A220',
+            // ATR
+            'AT43': 'ATR 42-300', 'AT45': 'ATR 42-500', 'AT46': 'ATR 42-600',
+            'AT72': 'ATR 72-200', 'AT75': 'ATR 72-500', 'AT76': 'ATR 72-600',
+            // McDonnell Douglas
+            'MD11': 'McDonnell Douglas MD-11', 'MD80': 'McDonnell Douglas MD-80',
+            'MD81': 'MD-81', 'MD82': 'MD-82', 'MD83': 'MD-83', 'MD87': 'MD-87', 'MD88': 'MD-88', 'MD90': 'MD-90',
+            'DC10': 'McDonnell Douglas DC-10',
+            // Business Jets
+            'C25A': 'Cessna Citation CJ2', 'C25B': 'Cessna Citation CJ3', 'C25C': 'Cessna Citation CJ4',
+            'C500': 'Cessna Citation I', 'C510': 'Cessna Citation Mustang', 'C525': 'Cessna CitationJet',
+            'C550': 'Cessna Citation II', 'C560': 'Cessna Citation V', 'C56X': 'Cessna Citation Excel',
+            'C680': 'Cessna Citation Sovereign', 'C700': 'Cessna Citation Longitude', 'C750': 'Cessna Citation X',
+            'CL30': 'Bombardier Challenger 300', 'CL35': 'Bombardier Challenger 350',
+            'CL60': 'Bombardier Challenger 600', 'CL64': 'Bombardier Challenger 604', 'CL65': 'Bombardier Challenger 650',
+            'GL5T': 'Bombardier Global 5000', 'GL7T': 'Bombardier Global 7500', 'GLEX': 'Bombardier Global Express',
+            'G150': 'Gulfstream G150', 'G200': 'Gulfstream G200', 'G280': 'Gulfstream G280',
+            'GLF4': 'Gulfstream G-IV', 'GLF5': 'Gulfstream G-V', 'GLF6': 'Gulfstream G650',
+            'G550': 'Gulfstream G550', 'G650': 'Gulfstream G650',
+            'LJ35': 'Learjet 35', 'LJ45': 'Learjet 45', 'LJ60': 'Learjet 60', 'LJ75': 'Learjet 75',
+            'E50P': 'Embraer Phenom 100', 'E55P': 'Embraer Phenom 300',
+            'E545': 'Embraer Legacy 450', 'E550': 'Embraer Legacy 500', 'E35L': 'Embraer Legacy 600',
+            'FA50': 'Dassault Falcon 50', 'FA7X': 'Dassault Falcon 7X', 'F900': 'Dassault Falcon 900',
+            'F2TH': 'Dassault Falcon 2000', 'FA8X': 'Dassault Falcon 8X',
+            'PC12': 'Pilatus PC-12', 'PC24': 'Pilatus PC-24',
+            'PRM1': 'Beechcraft Premier I', 'BE40': 'Beechcraft Beechjet 400',
+            'H25B': 'Hawker 800', 'H25C': 'Hawker 1000',
+            // Cargo
+            'A306': 'Airbus A300-600F', 'B763F': 'Boeing 767-300F',
+            // Military / Special
+            'C130': 'Lockheed C-130 Hercules', 'C17': 'Boeing C-17 Globemaster',
+            'KC10': 'McDonnell Douglas KC-10', 'KC35': 'Boeing KC-135 Stratotanker',
+            'E3CF': 'Boeing E-3 Sentry (AWACS)', 'P8': 'Boeing P-8 Poseidon',
+            // Small Aircraft
+            'C172': 'Cessna 172 Skyhawk', 'C182': 'Cessna 182 Skylane', 'C208': 'Cessna 208 Caravan',
+            'PA28': 'Piper Cherokee', 'PA32': 'Piper Saratoga', 'PA46': 'Piper Malibu',
+            'BE36': 'Beechcraft Bonanza', 'BE58': 'Beechcraft Baron', 'BE9L': 'Beechcraft King Air 90',
+            'BE20': 'Beechcraft King Air 200', 'BE30': 'Beechcraft King Air 300', 'BE35': 'Beechcraft Bonanza',
+            'SR20': 'Cirrus SR20', 'SR22': 'Cirrus SR22', 'SF50': 'Cirrus Vision Jet',
+            'DA40': 'Diamond DA40', 'DA42': 'Diamond DA42', 'DA62': 'Diamond DA62',
+            // Helicopters
+            'R22': 'Robinson R22', 'R44': 'Robinson R44', 'R66': 'Robinson R66',
+            'EC35': 'Airbus EC135', 'EC45': 'Airbus EC145', 'EC55': 'Airbus EC155',
+            'A139': 'Leonardo AW139', 'A169': 'Leonardo AW169', 'A189': 'Leonardo AW189',
+            'S76': 'Sikorsky S-76', 'S92': 'Sikorsky S-92',
+            'B06': 'Bell 206', 'B407': 'Bell 407', 'B412': 'Bell 412', 'B429': 'Bell 429'
+        };
+        
+        function getAircraftTypeName(code) {
+            if (!code) return null;
+            return AIRCRAFT_TYPES[code.toUpperCase()] || code;
+        }
+
+        // ============================================
+        // CLOCK
+        // ============================================
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ============================================
+        // KIOSK MODE
+        // ============================================
+        let kioskMode = false;
+        let cursorTimeout = null;
+        let tapCount = 0;
+        let tapTimeout = null;
+        
+        function toggleKiosk() {
+            if (kioskMode) {
+                exitKiosk();
+            } else {
+                enterKiosk();
+            }
+        }
+        
+        function enterKiosk() {
+            kioskMode = true;
+            document.body.classList.add('kiosk-mode');
+            document.getElementById('kioskBtn').classList.add('active');
+            
+            // Try to go fullscreen
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {});
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            }
+            
+            // Hide cursor after 3 seconds of inactivity
+            startCursorHideTimer();
+            
+            // Save state
+            localStorage.setItem('kioskMode', 'true');
+        }
+        
+        function exitKiosk() {
+            kioskMode = false;
+            document.body.classList.remove('kiosk-mode', 'show-cursor');
+            document.getElementById('kioskBtn').classList.remove('active');
+            document.getElementById('kioskExitHint').style.display = 'none';
+            
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            
+            if (cursorTimeout) clearTimeout(cursorTimeout);
+            localStorage.removeItem('kioskMode');
+        }
+        
+        function startCursorHideTimer() {
+            if (cursorTimeout) clearTimeout(cursorTimeout);
+            document.body.classList.add('show-cursor');
+            cursorTimeout = setTimeout(() => {
+                if (kioskMode) {
+                    document.body.classList.remove('show-cursor');
+                }
+            }, 3000);
+        }
+        
+        // Show cursor on mouse move
+        document.addEventListener('mousemove', () => {
+            if (kioskMode) startCursorHideTimer();
+        });
+        
+        // Triple-tap to show exit menu
+        document.addEventListener('click', (e) => {
+            if (!kioskMode) return;
+            
+            tapCount++;
+            if (tapTimeout) clearTimeout(tapTimeout);
+            
+            tapTimeout = setTimeout(() => {
+                tapCount = 0;
+            }, 500);
+            
+            if (tapCount >= 3) {
+                tapCount = 0;
+                document.getElementById('kioskExitHint').style.display = 'block';
+                startCursorHideTimer();
+            }
+        });
+        
+        // Hide exit hint when clicking outside
+        document.getElementById('kioskExitHint').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('kioskExitHint')) {
+                document.getElementById('kioskExitHint').style.display = 'none';
+            }
+        });
+        
+        // Prevent context menu in kiosk mode
+        document.addEventListener('contextmenu', (e) => {
+            if (kioskMode) e.preventDefault();
+        });
+        
+        // Restore kiosk mode on page load
+        if (localStorage.getItem('kioskMode') === 'true') {
+            setTimeout(enterKiosk, 500);
+        }
+        
+        // Handle fullscreen exit
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && kioskMode) {
+                // User pressed Escape - stay in kiosk but show exit hint
+                document.getElementById('kioskExitHint').style.display = 'block';
+            }
+        });
+
+        // ============================================
+        // SHELLY KITCHEN LIGHTS
+        // ============================================
+        const SHELLY_API = '/api/shelly';
+        const SHELLY_REFRESH_MS = 5000; // Poll every 5 seconds
+        
+        let shellyState = {};
+        
+        async function fetchShellyStatus() {
+            const statusEl = document.getElementById('shellyStatus');
+            try {
+                const response = await fetch(`${SHELLY_API}?action=status`);
+                const data = await response.json();
+                
+                if (data.success && data.devices) {
+                    shellyState = data.devices;
+                    updateShellyUI();
+                    statusEl.textContent = 'Live';
+                    statusEl.style.color = 'var(--accent-green)';
+                }
+            } catch (err) {
+                console.error('Shelly error:', err);
+                statusEl.textContent = 'Offline';
+                statusEl.style.color = 'var(--accent-red)';
+            }
+        }
+        
+        function updateShellyUI() {
+            let allOn = true;
+            let anyOn = false;
+            
+            for (const [key, device] of Object.entries(shellyState)) {
+                const btn = document.getElementById(`btn-${key}`);
+                const powerEl = document.getElementById(`power-${key}`);
+                
+                if (btn) {
+                    if (device.on) {
+                        btn.classList.add('active');
+                        anyOn = true;
+                    } else {
+                        btn.classList.remove('active');
+                        allOn = false;
+                    }
+                }
+                
+                if (powerEl && device.on) {
+                    powerEl.textContent = `${device.power.toFixed(1)}W`;
+                } else if (powerEl) {
+                    powerEl.textContent = '';
+                }
+            }
+            
+            // Update "All" button
+            const allBtn = document.getElementById('btn-all');
+            if (allBtn) {
+                if (anyOn) {
+                    allBtn.classList.add('active');
+                } else {
+                    allBtn.classList.remove('active');
+                }
+            }
+        }
+        
+        async function toggleShelly(device) {
+            const btn = document.getElementById(`btn-${device}`);
+            const currentState = shellyState[device]?.on || false;
+            const newState = !currentState;
+            
+            btn.classList.add('loading');
+            
+            try {
+                const response = await fetch(`${SHELLY_API}?action=control&device=${device}&state=${newState ? 'on' : 'off'}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update local state immediately
+                    if (shellyState[device]) {
+                        shellyState[device].on = newState;
+                    }
+                    updateShellyUI();
+                }
+            } catch (err) {
+                console.error('Shelly control error:', err);
+            }
+            
+            btn.classList.remove('loading');
+        }
+        
+        async function toggleShellyAll() {
+            const allBtn = document.getElementById('btn-all');
+            const anyOn = Object.values(shellyState).some(d => d.on);
+            const newState = !anyOn;
+            
+            allBtn.classList.add('loading');
+            document.querySelectorAll('.kitchen-btn').forEach(b => b.classList.add('loading'));
+            
+            try {
+                const response = await fetch(`${SHELLY_API}?action=control&device=all&state=${newState ? 'on' : 'off'}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update all local states
+                    for (const key of Object.keys(shellyState)) {
+                        shellyState[key].on = newState;
+                    }
+                    updateShellyUI();
+                }
+            } catch (err) {
+                console.error('Shelly control all error:', err);
+            }
+            
+            document.querySelectorAll('.kitchen-btn').forEach(b => b.classList.remove('loading'));
+        }
+
+        let currentTemp = 72;
+        function adjustTemp(delta) {
+            currentTemp += delta;
+            document.getElementById('thermostatTemp').innerHTML = currentTemp + '&#xB0;';
+        }
+        
+        async function activateScene(scene) {
+            const btn = event.target.closest('.scene-btn');
+            btn.style.opacity = '0.5';
+            
+            try {
+                switch(scene) {
+                    case 'morning':
+                        // Turn on all kitchen lights
+                        await fetch(`${SHELLY_API}?action=control&device=all&state=on`);
+                        break;
+                    case 'bedtime':
+                        // Turn off all kitchen lights
+                        await fetch(`${SHELLY_API}?action=control&device=all&state=off`);
+                        break;
+                    case 'movie':
+                        // Turn off all kitchen lights
+                        await fetch(`${SHELLY_API}?action=control&device=all&state=off`);
+                        break;
+                    case 'away':
+                        // Turn off all kitchen lights
+                        await fetch(`${SHELLY_API}?action=control&device=all&state=off`);
+                        break;
+                }
+                // Refresh status
+                await fetchShellyStatus();
+            } catch (err) {
+                console.error('Scene error:', err);
+            }
+            
+            btn.style.opacity = '1';
+        }
+
+        // ============================================
+        // CONNECTION STATUS
+        // ============================================
+        function updateConnectionStatus(connected) {
+            const badge = document.getElementById('connectionStatus');
+            const text = document.getElementById('statusText');
+            const feedStatus = document.getElementById('feedStatus');
+            if (connected) {
+                badge.className = 'status-badge connected';
+                text.textContent = 'Connected';
+                feedStatus.className = 'online-badge';
+                feedStatus.innerHTML = '&#x25CF; LIVE';
+            } else {
+                badge.className = 'status-badge disconnected';
+                text.textContent = 'Disconnected';
+                feedStatus.className = 'offline-badge';
+                feedStatus.innerHTML = '&#x25CF; OFFLINE';
+            }
+        }
+
+        // ============================================
+        // ALEXA FEED
+        // ============================================
+        function addFeedItem(event) {
+            const feed = document.getElementById('alexaFeed');
+            const icons = { 'music': '&#x1F3B5;', 'smart-home': '&#x1F4A1;', 'recipe': '&#x1F373;', 'weather': '&#x2600;&#xFE0F;', 'timer': '&#x23F0;', 'general': '&#x1F3A4;' };
+            const item = document.createElement('div');
+            item.className = 'feed-item ' + (event.type || 'general');
+            item.innerHTML = `
+                <div class="feed-icon">${icons[event.type] || '&#x1F3A4;'}</div>
+                <div class="feed-content">
+                    <div class="feed-device">${event.device || 'Echo Device'}</div>
+                    <div class="feed-utterance">"${event.utterance || event.message || 'Unknown'}"</div>
+                    <div class="feed-response">${event.response || ''}</div>
+                    <div class="feed-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+            while (feed.children.length > 15) feed.removeChild(feed.lastChild);
+        }
+
+        // ============================================
+        // SIGNALR CONNECTION
+        // ============================================
+        function connectSignalR() {
+            if (CONFIG.DEMO_MODE) {
+                updateConnectionStatus(true);
+                return;
+            }
+            try {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(CONFIG.SIGNALR_URL, { withCredentials: false })
+                    .withAutomaticReconnect()
+                    .build();
+                connection.on('alexaEvent', (event) => { addFeedItem(event); });
+                connection.onreconnecting(() => updateConnectionStatus(false));
+                connection.onreconnected(() => updateConnectionStatus(true));
+                connection.onclose(() => { updateConnectionStatus(false); setTimeout(connectSignalR, 5000); });
+                connection.start()
+                    .then(() => updateConnectionStatus(true))
+                    .catch(err => { console.error('SignalR error:', err); updateConnectionStatus(false); setTimeout(connectSignalR, 5000); });
+            } catch (err) {
+                console.error('SignalR setup error:', err);
+                updateConnectionStatus(false);
+            }
+        }
+
+        // ============================================
+        // FLIGHTAWARE ROUTE LOOKUP
+        // ============================================
+        const routeCache = loadRouteCache();
+        const routeLookupQueue = [];
+        let routeLookupInProgress = false;
+        
+        function loadRouteCache() {
+            try {
+                const cached = localStorage.getItem('flightRouteCache');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    // Clean expired entries
+                    const now = Date.now();
+                    const maxAge = CONFIG.ROUTE_CACHE_HOURS * 60 * 60 * 1000;
+                    Object.keys(data).forEach(key => {
+                        if (now - data[key].timestamp > maxAge) {
+                            delete data[key];
+                        }
+                    });
+                    return data;
+                }
+            } catch (e) {}
+            return {};
+        }
+        
+        function saveRouteCache() {
+            try {
+                localStorage.setItem('flightRouteCache', JSON.stringify(routeCache));
+            } catch (e) {}
+        }
+        
+        function getRouteFromCache(callsign) {
+            const entry = routeCache[callsign];
+            if (entry) {
+                const age = Date.now() - entry.timestamp;
+                if (age < CONFIG.ROUTE_CACHE_HOURS * 60 * 60 * 1000) {
+                    return entry.route;
+                }
+            }
+            return null;
+        }
+        
+        function queueRouteLookup(callsign) {
+            if (!CONFIG.ROUTE_LOOKUP_ENABLED) return;
+            if (!callsign || callsign === 'Unknown') return;
+            if (getRouteFromCache(callsign)) return;
+            if (routeCache[callsign] && routeCache[callsign].notFound) return; // Already tried, not found
+            if (routeLookupQueue.includes(callsign)) return;
+            
+            routeLookupQueue.push(callsign);
+            processRouteLookupQueue();
+        }
+        
+        async function processRouteLookupQueue() {
+            if (routeLookupInProgress || routeLookupQueue.length === 0) return;
+            if (!CONFIG.ROUTE_LOOKUP_ENABLED) return;
+            
+            routeLookupInProgress = true;
+            updateRouteStatus();
+            const callsign = routeLookupQueue.shift();
+            
+            try {
+                const response = await fetch(`${CONFIG.FLIGHTAWARE_PROXY_URL}?callsign=${encodeURIComponent(callsign)}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.found && data.origin && data.destination) {
+                        const route = `${data.origin.code} → ${data.destination.code}`;
+                        
+                        routeCache[callsign] = {
+                            route: route,
+                            origin: data.origin,
+                            destination: data.destination,
+                            aircraft: data.aircraftType,
+                            registration: data.registration,
+                            timestamp: Date.now()
+                        };
+                        saveRouteCache();
+                        console.log(`Route found: ${callsign} = ${route} (${data.aircraftType || 'unknown type'})`);
+                    } else {
+                        // Mark as not found so we don't keep trying
+                        routeCache[callsign] = { notFound: true, timestamp: Date.now() };
+                        saveRouteCache();
+                    }
+                } else if (response.status === 429) {
+                    // Rate limited - put back in queue and wait longer
+                    routeLookupQueue.unshift(callsign);
+                    console.warn('FlightAware rate limited, waiting...');
+                    setTimeout(() => {
+                        routeLookupInProgress = false;
+                        updateRouteStatus();
+                        processRouteLookupQueue();
+                    }, 10000); // Wait 10 seconds
+                    return;
+                }
+            } catch (error) {
+                console.error('Route lookup error:', error);
+            }
+            
+            // Wait 2 seconds between lookups to conserve API credits
+            setTimeout(() => {
+                routeLookupInProgress = false;
+                updateRouteStatus();
+                processRouteLookupQueue();
+            }, 2000);
+        }
+        
+        function updateRouteStatus() {
+            const statusEl = document.getElementById('routeStatus');
+            if (!statusEl) return;
+            
+            if (routeLookupQueue.length > 0 || routeLookupInProgress) {
+                statusEl.style.display = 'inline';
+                statusEl.innerHTML = `&#x1F50D; ${routeLookupQueue.length + (routeLookupInProgress ? 1 : 0)} pending`;
+            } else {
+                statusEl.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // FLIGHT TRACKER (PiAware Local Data)
+        // ============================================
+        const HOME_LAT = 35.7915;
+        const HOME_LON = -78.7811;
+        const OVERHEAD_RADIUS_MILES = 1.5; // Highlight if within this radius
+        
+        // Calculate distance between two points in miles (Haversine formula)
+        function getDistanceMiles(lat1, lon1, lat2, lon2) {
+            const R = 3958.8; // Earth radius in miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        async function fetchFlights() {
+            const container = document.getElementById('flightContainer');
+            const countEl = document.getElementById('flightCount');
+            
+            try {
+                const response = await fetch(CONFIG.PIAWARE_URL);
+                const data = await response.json();
+                
+                // Filter aircraft with position data
+                const validAircraft = (data.aircraft || []).filter(ac => 
+                    ac.lat && ac.lon && ac.seen < 60
+                );
+                
+                if (validAircraft.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-flights">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">&#x2708;&#xFE0F;</div>
+                            No aircraft detected
+                            <div style="font-size: 0.8rem; margin-top: 5px; color: var(--text-dim);">Your receiver is listening...</div>
+                        </div>
+                    `;
+                    countEl.textContent = '0 aircraft';
+                    return;
+                }
+                
+                // Sort: overhead first, then by altitude (lowest first - more interesting)
+                const flights = validAircraft.sort((a, b) => {
+                    const aOverhead = getDistanceMiles(HOME_LAT, HOME_LON, a.lat, a.lon) <= OVERHEAD_RADIUS_MILES;
+                    const bOverhead = getDistanceMiles(HOME_LAT, HOME_LON, b.lat, b.lon) <= OVERHEAD_RADIUS_MILES;
+                    if (aOverhead && !bOverhead) return -1;
+                    if (!aOverhead && bOverhead) return 1;
+                    return (a.alt_baro || 99999) - (b.alt_baro || 99999);
+                });
+                
+                countEl.textContent = `${flights.length} aircraft`;
+                
+                container.innerHTML = flights.slice(0, 12).map(ac => {
+                    const callsign = (ac.flight || ac.hex || 'Unknown').trim();
+                    const hex = ac.hex ? ac.hex.toUpperCase() : '';
+                    const altitude = ac.alt_baro || ac.alt_geom || null;
+                    const speed = ac.gs ? Math.round(ac.gs) : null; // Ground speed in knots
+                    const heading = ac.track || ac.nav_heading || 0;
+                    const vertRate = ac.baro_rate || ac.geom_rate || 0;
+                    const squawk = ac.squawk || '';
+                    const category = ac.category || '';
+                    const distance = ac.r_dst ? ac.r_dst.toFixed(1) : null;
+                    const rssi = ac.rssi ? ac.rssi.toFixed(1) : null;
+                    
+                    // Check if overhead
+                    const distFromHome = getDistanceMiles(HOME_LAT, HOME_LON, ac.lat, ac.lon);
+                    const isOverhead = distFromHome <= OVERHEAD_RADIUS_MILES;
+                    const overheadClass = isOverhead ? 'overhead' : '';
+                    const overheadBadge = isOverhead ? '<span class="overhead-badge">✈️ OVERHEAD</span>' : '';
+                    
+                    // Determine direction arrow and cardinal direction
+                    const directions = ['&#x2191;', '&#x2197;', '&#x2192;', '&#x2198;', '&#x2193;', '&#x2199;', '&#x2190;', '&#x2196;'];
+                    const cardinals = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                    const dirIndex = Math.round(heading / 45) % 8;
+                    const dirArrow = directions[dirIndex];
+                    const cardinal = cardinals[dirIndex];
+                    
+                    // Vertical status
+                    let vertStatus = '';
+                    let vertIcon = '';
+                    if (vertRate > 200) { vertStatus = 'Climbing'; vertIcon = '&#x2197;'; }
+                    else if (vertRate < -200) { vertStatus = 'Descending'; vertIcon = '&#x2198;'; }
+                    else { vertStatus = 'Level'; vertIcon = '&#x2192;'; }
+                    
+                    // Altitude color
+                    let altColor = 'var(--accent-green)';
+                    if (altitude > 30000) altColor = 'var(--accent-cyan)';
+                    else if (altitude > 15000) altColor = 'var(--accent-yellow)';
+                    else if (altitude > 5000) altColor = 'var(--accent-orange)';
+                    else if (altitude) altColor = 'var(--accent-red)';
+                    
+                    // Aircraft type from category
+                    const categoryMap = {
+                        'A1': 'Light', 'A2': 'Small', 'A3': 'Large', 'A4': 'High Vortex',
+                        'A5': 'Heavy', 'A6': 'High Perf', 'A7': 'Rotorcraft',
+                        'B1': 'Glider', 'B2': 'Balloon', 'B4': 'Skydiver', 'B6': 'UAV',
+                        'C1': 'Emergency', 'C3': 'Ground Obstruction'
+                    };
+                    const acType = categoryMap[category] || '';
+                    
+                    // Airline identification
+                    const airlineMap = {
+                        'AAL': 'American', 'DAL': 'Delta', 'UAL': 'United', 'SWA': 'Southwest',
+                        'JBU': 'JetBlue', 'ASA': 'Alaska', 'FFT': 'Frontier', 'NKS': 'Spirit',
+                        'RPA': 'Republic', 'SKW': 'SkyWest', 'ENY': 'Envoy', 'PDT': 'Piedmont',
+                        'FDX': 'FedEx', 'UPS': 'UPS', 'GTI': 'Atlas Air', 'EJA': 'NetJets',
+                        'LXJ': 'Flexjet', 'XOJ': 'XOJET', 'AWI': 'Air Wisconsin'
+                    };
+                    const prefix = callsign.substring(0, 3);
+                    const airline = airlineMap[prefix] || '';
+                    
+                    // Emergency squawks
+                    let emergencyBadge = '';
+                    if (squawk === '7500') emergencyBadge = '<span style="background: var(--accent-red); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">HIJACK</span>';
+                    else if (squawk === '7600') emergencyBadge = '<span style="background: var(--accent-orange); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">RADIO FAIL</span>';
+                    else if (squawk === '7700') emergencyBadge = '<span style="background: var(--accent-red); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">EMERGENCY</span>';
+                    
+                    // Route info from FlightAware cache
+                    const cachedData = routeCache[callsign];
+                    let routeDisplay = `<span style="color: var(--text-dim);">Heading ${cardinal}</span>`;
+                    let aircraftType = acType;
+                    let aircraftTypeDisplay = '';
+                    
+                    if (cachedData && cachedData.route) {
+                        routeDisplay = `<span style="color: var(--accent-green);">${cachedData.route}</span>`;
+                        if (cachedData.aircraft) {
+                            aircraftType = getAircraftTypeName(cachedData.aircraft);
+                        }
+                    } else {
+                        // Queue for lookup
+                        queueRouteLookup(callsign);
+                    }
+                    
+                    // Format aircraft type display
+                    if (aircraftType) {
+                        aircraftTypeDisplay = `<span style="color: var(--accent-cyan); font-size: 0.75rem; margin-left: 5px;">${aircraftType}</span>`;
+                    }
+                    
+                    return `
+                        <div class="flight-item ${overheadClass}">
+                            <div class="flight-icon" style="color: ${altColor}">&#x2708;&#xFE0F;</div>
+                            <div class="flight-info">
+                                <div class="flight-callsign">
+                                    ${callsign} 
+                                    ${airline ? '<span style="color: var(--accent-purple); font-size: 0.8rem;">(' + airline + ')</span>' : ''}
+                                    ${aircraftTypeDisplay}
+                                    ${emergencyBadge}
+                                    ${overheadBadge}
+                                </div>
+                                <div class="flight-route">
+                                    ${routeDisplay}
+                                    ${distance ? ' &bull; ' + distance + ' nm away' : ''}
+                                </div>
+                                <div class="flight-details">
+                                    <div class="flight-detail">Speed: <span>${speed ? speed + ' kts' : 'N/A'}</span></div>
+                                    <div class="flight-detail">${dirArrow} ${Math.round(heading)}°</div>
+                                    <div class="flight-detail">${vertIcon} ${vertStatus}</div>
+                                    ${squawk && !emergencyBadge ? '<div class="flight-detail">Squawk: <span>' + squawk + '</span></div>' : ''}
+                                </div>
+                            </div>
+                            <div class="flight-altitude">
+                                <div class="flight-alt-value" style="color: ${altColor}">${altitude ? altitude.toLocaleString() : 'GND'}</div>
+                                <div class="flight-alt-label">${altitude ? 'feet' : ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Flight fetch error:', error);
+                container.innerHTML = `
+                    <div class="no-flights">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">&#x26A0;&#xFE0F;</div>
+                        Cannot reach PiAware
+                        <div style="font-size: 0.8rem; margin-top: 5px; color: var(--text-dim);">Check: ${CONFIG.PIAWARE_URL}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
+        // WEATHER (National Weather Service)
+        // ============================================
+        const WEATHER_LAT = 35.7915;
+        const WEATHER_LON = -78.7811;
+        const WEATHER_REFRESH_MS = 600000; // 10 minutes
+        let weatherGridUrl = null;
+        let weatherForecastUrl = null;
+        let weatherStationId = null;
+        
+        async function initWeather() {
+            try {
+                // Get grid point info for this location
+                const pointsResponse = await fetch(`https://api.weather.gov/points/${WEATHER_LAT},${WEATHER_LON}`, {
+                    headers: { 'User-Agent': 'NEXUS Dashboard' }
+                });
+                const pointsData = await pointsResponse.json();
+                
+                weatherGridUrl = pointsData.properties.forecastHourly;
+                weatherForecastUrl = pointsData.properties.forecast;
+                
+                // Get observation station
+                const stationsResponse = await fetch(pointsData.properties.observationStations, {
+                    headers: { 'User-Agent': 'NEXUS Dashboard' }
+                });
+                const stationsData = await stationsResponse.json();
+                weatherStationId = stationsData.features[0].properties.stationIdentifier;
+                
+                // Fetch initial weather
+                await fetchWeather();
+            } catch (err) {
+                console.error('Weather init error:', err);
+                document.getElementById('weatherCondition').textContent = 'Unable to load';
+            }
+        }
+        
+        async function fetchWeather() {
+            const statusEl = document.getElementById('weatherStatus');
+            
+            try {
+                let currentTemp = null;
+                let humidity = null;
+                let windSpeed = null;
+                let feelsLike = null;
+                let condition = null;
+                
+                // Get current observations
+                if (weatherStationId) {
+                    const obsResponse = await fetch(`https://api.weather.gov/stations/${weatherStationId}/observations/latest`, {
+                        headers: { 'User-Agent': 'NEXUS Dashboard' }
+                    });
+                    const obsData = await obsResponse.json();
+                    const obs = obsData.properties;
+                    
+                    if (obs.temperature && obs.temperature.value !== null) {
+                        currentTemp = Math.round(obs.temperature.value * 9/5 + 32);
+                    }
+                    if (obs.relativeHumidity && obs.relativeHumidity.value !== null) {
+                        humidity = Math.round(obs.relativeHumidity.value);
+                    }
+                    if (obs.windSpeed && obs.windSpeed.value !== null) {
+                        windSpeed = Math.round(obs.windSpeed.value * 0.621371);
+                    } else if (obs.windGust && obs.windGust.value !== null) {
+                        // Fallback to gust if speed not available
+                        windSpeed = Math.round(obs.windGust.value * 0.621371);
+                    }
+                    if (obs.windChill && obs.windChill.value !== null) {
+                        feelsLike = Math.round(obs.windChill.value * 9/5 + 32);
+                    } else if (obs.heatIndex && obs.heatIndex.value !== null) {
+                        feelsLike = Math.round(obs.heatIndex.value * 9/5 + 32);
+                    } else {
+                        feelsLike = currentTemp;
+                    }
+                }
+                
+                // Get forecast for condition and forecast display
+                if (weatherForecastUrl) {
+                    const forecastResponse = await fetch(weatherForecastUrl, {
+                        headers: { 'User-Agent': 'NEXUS Dashboard' }
+                    });
+                    const forecastData = await forecastResponse.json();
+                    const periods = forecastData.properties.periods;
+                    
+                    // Get current condition from first period
+                    if (periods.length > 0) {
+                        condition = periods[0].shortForecast;
+                        // If we didn't get temp from observation, use forecast
+                        if (currentTemp === null) {
+                            currentTemp = periods[0].temperature;
+                        }
+                    }
+                    
+                    // Build 4-day forecast with highs and lows
+                    const dailyData = {};
+                    for (const period of periods.slice(0, 10)) {
+                        const date = new Date(period.startTime);
+                        const dayKey = date.toLocaleDateString('en-US', { weekday: 'short' });
+                        
+                        if (!dailyData[dayKey]) {
+                            dailyData[dayKey] = { day: dayKey, icon: period.shortForecast, high: null, low: null };
+                        }
+                        
+                        if (period.isDaytime) {
+                            dailyData[dayKey].high = period.temperature;
+                            dailyData[dayKey].icon = period.shortForecast;
+                        } else {
+                            dailyData[dayKey].low = period.temperature;
+                        }
+                    }
+                    
+                    const forecasts = Object.values(dailyData).slice(0, 4);
+                    const forecastEl = document.getElementById('weatherForecast');
+                    forecastEl.innerHTML = forecasts.map(f => `
+                        <div class="forecast-item">
+                            <div class="forecast-day">${f.day}</div>
+                            <div class="forecast-icon">${getWeatherIcon(f.icon || '')}</div>
+                            <div class="forecast-temps">
+                                <span class="forecast-high">${f.high || '--'}°</span>
+                                <span class="forecast-low">${f.low !== null ? ' / ' + f.low + '°' : ''}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                // Update UI
+                document.getElementById('weatherTemp').textContent = `${currentTemp || '--'}°`;
+                document.getElementById('weatherCondition').textContent = condition || 'Clear';
+                document.getElementById('weatherHumidity').textContent = `${humidity || '--'}%`;
+                document.getElementById('weatherWind').textContent = `${windSpeed || '--'} mph`;
+                document.getElementById('weatherFeelsLike').textContent = `${feelsLike || '--'}°`;
+                document.getElementById('weatherIconLarge').textContent = getWeatherIcon(condition || 'clear');
+                
+                statusEl.textContent = 'NWS';
+                statusEl.style.color = 'var(--accent-green)';
+                
+            } catch (err) {
+                console.error('Weather fetch error:', err);
+                statusEl.textContent = 'Error';
+                statusEl.style.color = 'var(--accent-red)';
+            }
+        }
+        
+        function getWeatherIcon(condition) {
+            const c = condition.toLowerCase();
+            if (c.includes('thunder') || c.includes('storm')) return '⛈️';
+            if (c.includes('rain') && c.includes('snow')) return '🌨️';
+            if (c.includes('sleet') || c.includes('ice')) return '🌨️';
+            if (c.includes('rain') || c.includes('shower') || c.includes('drizzle')) return '🌧️';
+            if (c.includes('snow') || c.includes('flurr')) return '❄️';
+            if (c.includes('fog') || c.includes('mist')) return '🌫️';
+            if (c.includes('haze') || c.includes('smoke')) return '🌫️';
+            if (c.includes('partly cloudy') || c.includes('partly sunny')) return '⛅';
+            if (c.includes('mostly cloudy')) return '🌥️';
+            if (c.includes('cloud') || c.includes('overcast')) return '☁️';
+            if (c.includes('sunny') || c.includes('clear')) return '☀️';
+            if (c.includes('fair')) return '🌤️';
+            if (c.includes('wind')) return '💨';
+            if (c.includes('hot')) return '🔥';
+            if (c.includes('cold')) return '🥶';
+            return '☀️';
+        }
+
+        // ============================================
+        // THERMOSTAT
+        // ============================================
+        const THERMOSTAT_API = '/api/thermostat';
+        const THERMOSTAT_REFRESH_MS = 60000; // Refresh every minute
+        
+        async function fetchThermostats(retryCount = 0) {
+            const container = document.getElementById('thermostatZones');
+            const statusEl = document.getElementById('thermostatStatus');
+            
+            try {
+                const response = await fetch(THERMOSTAT_API);
+                const data = await response.json();
+                
+                // Check if data is incomplete (cold start issue)
+                if (!data.success || !data.thermostats || data.thermostats.length === 0) {
+                    if (retryCount < 2) {
+                        statusEl.textContent = 'Warming up...';
+                        setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                        return;
+                    }
+                    container.innerHTML = '<div class="thermostat-loading">Unable to load thermostats</div>';
+                    return;
+                }
+                
+                // Check if we got actual data (not nulls from cold start)
+                const hasValidData = data.thermostats.some(t => t.currentTemp != null);
+                if (!hasValidData && retryCount < 2) {
+                    statusEl.textContent = 'Warming up...';
+                    setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                    return;
+                }
+                
+                const thermostats = data.thermostats;
+                const outdoor = thermostats[0]; // Get outdoor data from first thermostat
+                
+                let html = thermostats.map(t => {
+                    const isHeating = t.status === 'Heating';
+                    const isCooling = t.status === 'Cooling';
+                    const zoneClass = isHeating ? 'heating' : (isCooling ? 'cooling' : '');
+                    const modeClass = t.mode ? t.mode.toLowerCase() : 'off';
+                    const statusClass = t.status ? t.status.toLowerCase() : '';
+                    
+                    const currentTemp = t.currentTemp != null ? Math.round(t.currentTemp) : '--';
+                    const targetTemp = t.targetTemp != null ? Math.round(t.targetTemp) : '--';
+                    const humidity = t.humidity != null ? t.humidity : '--';
+                    const mode = t.mode || 'Off';
+                    const status = t.status || 'Idle';
+                    
+                    return `
+                        <div class="thermostat-zone ${zoneClass}">
+                            <div class="zone-temps">
+                                <div class="zone-current">${currentTemp}°</div>
+                                <div class="zone-target">Set: ${targetTemp}°</div>
+                            </div>
+                            <div class="zone-info">
+                                <div class="zone-name">${t.name}</div>
+                                <div class="zone-details">
+                                    <span>💧 ${humidity}%</span>
+                                    <span class="zone-mode ${modeClass}">${mode}</span>
+                                    ${status !== 'Idle' ? `<span class="zone-mode ${statusClass}">${status}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Add outdoor info
+                if (outdoor.outdoorTemp) {
+                    html += `
+                        <div class="thermostat-outdoor">
+                            <span>Outside: <span>${Math.round(outdoor.outdoorTemp)}°F</span></span>
+                            <span>Humidity: <span>${outdoor.outdoorHumidity}%</span></span>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+                statusEl.textContent = 'Live';
+                statusEl.style.color = 'var(--accent-green)';
+                
+            } catch (err) {
+                console.error('Thermostat error:', err);
+                if (retryCount < 2) {
+                    statusEl.textContent = 'Retrying...';
+                    setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                    return;
+                }
+                container.innerHTML = '<div class="thermostat-loading">Error loading thermostats</div>';
+                statusEl.textContent = 'Offline';
+                statusEl.style.color = 'var(--accent-red)';
+            }
+        }
+
+        // ============================================
+        // RECIPES
+        // ============================================
+        const TANDOOR_URL = 'http://178.156.143.114';
+        
+        function openRecipes() {
+            window.open(TANDOOR_URL, '_blank');
+        }
+
+        // ============================================
+        // WAKE LOCK
+        // ============================================
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {}
+        }
+
+        // ============================================
+        // RING DOORBELL CAMERA
+        // ============================================
+        const RING_API = '/api/ring';
+        const RING_REFRESH_MS = 30000; // Refresh every 30 seconds
+        
+        async function fetchRingSnapshot() {
+            const statusEl = document.getElementById('ringStatus');
+            const snapshotEl = document.getElementById('ringSnapshot');
+            const placeholderEl = document.getElementById('ringPlaceholder');
+            const batteryEl = document.getElementById('ringBattery');
+            const wifiEl = document.getElementById('ringWifi');
+            const lastUpdateEl = document.getElementById('ringLastUpdate');
+            
+            try {
+                statusEl.textContent = 'Updating...';
+                
+                const response = await fetch(RING_API);
+                const data = await response.json();
+                
+                if (data.success && data.snapshot) {
+                    // Show snapshot
+                    snapshotEl.src = `data:image/jpeg;base64,${data.snapshot}`;
+                    snapshotEl.style.display = 'block';
+                    placeholderEl.style.display = 'none';
+                    
+                    // Update info
+                    if (data.battery !== undefined && data.battery !== null) {
+                        batteryEl.textContent = `${data.battery}%`;
+                    } else {
+                        batteryEl.textContent = 'N/A';
+                    }
+                    if (data.wifi !== undefined && data.wifi !== null) {
+                        wifiEl.textContent = `${data.wifi} dBm`;
+                    } else {
+                        wifiEl.textContent = 'N/A';
+                    }
+                    
+                    const now = new Date();
+                    lastUpdateEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    
+                    statusEl.textContent = 'Live';
+                    statusEl.classList.add('live');
+                } else {
+                    statusEl.textContent = data.error || 'Unavailable';
+                    statusEl.classList.remove('live');
+                }
+            } catch (err) {
+                console.error('Ring error:', err);
+                statusEl.textContent = 'Offline';
+                statusEl.classList.remove('live');
+            }
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            connectSignalR();
+            requestWakeLock();
+            
+            // Start flight tracker
+            fetchFlights();
+            setInterval(fetchFlights, CONFIG.FLIGHT_REFRESH_MS);
+            
+            // Start thermostat updates
+            fetchThermostats();
+            setInterval(fetchThermostats, THERMOSTAT_REFRESH_MS);
+            
+            // Start weather updates
+            initWeather();
+            setInterval(fetchWeather, WEATHER_REFRESH_MS);
+            
+            // Start Shelly light status polling
+            fetchShellyStatus();
+            setInterval(fetchShellyStatus, SHELLY_REFRESH_MS);
+            
+            // Start Ring camera polling
+            fetchRingSnapshot();
+            setInterval(fetchRingSnapshot, RING_REFRESH_MS);
+        });
+    </script>
+</body>
+</html>

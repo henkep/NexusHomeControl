@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS Setup Wizard</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #0f1623;
+            --bg-card: rgba(15, 25, 45, 0.95);
+            --accent-cyan: #00f0ff;
+            --accent-green: #00ff88;
+            --accent-orange: #ff6b35;
+            --accent-red: #ff3366;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .wizard {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 700px;
+            overflow: hidden;
+        }
+        
+        .wizard-header {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(0, 255, 136, 0.1));
+            padding: 25px 30px;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+        }
+        
+        .wizard-title {
+            font-size: 1.8rem;
+            color: var(--accent-cyan);
+            margin-bottom: 5px;
+        }
+        
+        .wizard-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .progress-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .progress-step {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+        
+        .progress-step.active {
+            background: var(--accent-cyan);
+        }
+        
+        .progress-step.complete {
+            background: var(--accent-green);
+        }
+        
+        .wizard-content {
+            padding: 30px;
+            min-height: 400px;
+        }
+        
+        .step { display: none; }
+        .step.active { display: block; }
+        
+        .step-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--accent-cyan);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+        
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .device-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .device-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+        
+        .device-item:hover {
+            background: rgba(0, 240, 255, 0.1);
+        }
+        
+        .device-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-cyan);
+        }
+        
+        .device-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .device-info {
+            flex: 1;
+        }
+        
+        .device-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        
+        .device-details {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .device-config {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .device-config input {
+            width: 120px;
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+        
+        .device-config select {
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+        
+        .wizard-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-primary {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+        }
+        
+        .btn-primary:hover {
+            background: #00d4e6;
+        }
+        
+        .btn-success {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .scanning {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(0, 240, 255, 0.2);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-online { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .status-offline { background: rgba(255, 51, 102, 0.2); color: var(--accent-red); }
+        
+        .summary-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .summary-title {
+            font-size: 1rem;
+            color: var(--accent-cyan);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .summary-count {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+        
+        .summary-list {
+            list-style: none;
+        }
+        
+        .summary-list li {
+            padding: 5px 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-info {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            color: var(--accent-cyan);
+        }
+        
+        .alert-success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: var(--accent-green);
+        }
+        
+        .alert-warning {
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            color: var(--accent-orange);
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard">
+        <div class="wizard-header">
+            <h1 class="wizard-title">🏠 NEXUS Setup Wizard</h1>
+            <p class="wizard-subtitle">Configure your smart home dashboard</p>
+            <div class="progress-bar">
+                <div class="progress-step active" data-step="1"></div>
+                <div class="progress-step" data-step="2"></div>
+                <div class="progress-step" data-step="3"></div>
+                <div class="progress-step" data-step="4"></div>
+                <div class="progress-step" data-step="5"></div>
+            </div>
+        </div>
+        
+        <div class="wizard-content">
+            <!-- Step 1: Credentials -->
+            <div class="step active" data-step="1">
+                <h2 class="step-title">🔑 Account Credentials</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Enter your smart home account credentials for device discovery.
+                </p>
+                
+                <div class="form-group">
+                    <label class="form-label">Honeywell Email</label>
+                    <input type="email" class="form-input" id="honeywellEmail" placeholder="your@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Honeywell Password</label>
+                    <input type="password" class="form-input" id="honeywellPassword" placeholder="••••••••">
+                    <p class="form-hint">For Total Connect Comfort thermostats</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Ring Refresh Token</label>
+                    <input type="password" class="form-input" id="ringToken" placeholder="eyJhbG...">
+                    <p class="form-hint">Get this by running: npx ring-auth-cli</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Shelly Cloud Auth Key (Optional)</label>
+                    <input type="password" class="form-input" id="shellyAuth" placeholder="Only needed for cloud control">
+                    <p class="form-hint">Local control works without this</p>
+                </div>
+            </div>
+            
+            <!-- Step 2: Network Scan -->
+            <div class="step" data-step="2">
+                <h2 class="step-title">🔍 Device Discovery</h2>
+                
+                <div id="scanStatus" class="scanning">
+                    <div class="spinner"></div>
+                    <p>Scanning your network for smart devices...</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 10px;">
+                        This may take up to 60 seconds
+                    </p>
+                </div>
+                
+                <div id="scanResults" style="display: none;">
+                    <div class="alert alert-success">
+                        ✅ Discovery complete! Found <span id="totalDevices">0</span> devices.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Configure Shelly -->
+            <div class="step" data-step="3">
+                <h2 class="step-title">💡 Configure Lights & Switches</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Name your Shelly devices and assign them to rooms.
+                </p>
+                
+                <div class="device-list" id="shellyDevices">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Step 4: Configure Other Devices -->
+            <div class="step" data-step="4">
+                <h2 class="step-title">🌡️ Configure Other Devices</h2>
+                
+                <div id="honeywellSection" class="summary-section" style="display: none;">
+                    <div class="summary-title">
+                        🌡️ Thermostats
+                        <span class="summary-count" id="thermostatCount">0</span>
+                    </div>
+                    <div class="device-list" id="honeywellDevices"></div>
+                </div>
+                
+                <div id="ringSection" class="summary-section" style="display: none;">
+                    <div class="summary-title">
+                        🚪 Ring Devices
+                        <span class="summary-count" id="ringCount">0</span>
+                    </div>
+                    <div class="device-list" id="ringDevices"></div>
+                </div>
+                
+                <div id="piawareSection" class="summary-section" style="display: none;">
+                    <div class="summary-title">
+                        ✈️ PiAware/ADS-B
+                        <span class="summary-count" id="piawareCount">0</span>
+                    </div>
+                    <div class="device-list" id="piawareDevices"></div>
+                </div>
+                
+                <div id="noDevices" class="alert alert-warning" style="display: none;">
+                    No additional devices found. You can add them manually later.
+                </div>
+            </div>
+            
+            <!-- Step 5: Summary & Save -->
+            <div class="step" data-step="5">
+                <h2 class="step-title">✅ Configuration Summary</h2>
+                
+                <div class="alert alert-info">
+                    Review your configuration below. Click "Save & Start" to apply.
+                </div>
+                
+                <div class="summary-section">
+                    <div class="summary-title">💡 Lights & Switches</div>
+                    <ul class="summary-list" id="summaryShellyList"></ul>
+                </div>
+                
+                <div class="summary-section">
+                    <div class="summary-title">🌡️ Thermostats</div>
+                    <ul class="summary-list" id="summaryThermostatList"></ul>
+                </div>
+                
+                <div class="summary-section">
+                    <div class="summary-title">📹 Cameras & Doorbells</div>
+                    <ul class="summary-list" id="summaryRingList"></ul>
+                </div>
+                
+                <div class="summary-section">
+                    <div class="summary-title">✈️ Flight Tracking</div>
+                    <ul class="summary-list" id="summaryPiawareList"></ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="wizard-footer">
+            <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="visibility: hidden;">
+                ← Back
+            </button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">
+                Next →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+        
+        let discoveredDevices = {
+            shelly: [],
+            honeywell: [],
+            ring: [],
+            piaware: []
+        };
+        
+        let config = {
+            shelly: [],
+            honeywell: [],
+            ring: [],
+            piaware: [],
+            credentials: {}
+        };
+        
+        const iconOptions = ['💡', '🔥', '🔪', '🚰', '🛋️', '🛏️', '🚿', '🌳', '🚗', '🔌'];
+        const roomOptions = ['Kitchen', 'Living Room', 'Bedroom', 'Bathroom', 'Office', 'Garage', 'Outside', 'Other'];
+        
+        function updateProgress() {
+            document.querySelectorAll('.progress-step').forEach((el, i) => {
+                el.classList.remove('active', 'complete');
+                if (i + 1 < currentStep) el.classList.add('complete');
+                if (i + 1 === currentStep) el.classList.add('active');
+            });
+            
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active');
+                if (parseInt(el.dataset.step) === currentStep) {
+                    el.classList.add('active');
+                }
+            });
+            
+            // Update buttons
+            document.getElementById('prevBtn').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            
+            if (currentStep === totalSteps) {
+                document.getElementById('nextBtn').textContent = '🚀 Save & Start';
+                document.getElementById('nextBtn').classList.remove('btn-primary');
+                document.getElementById('nextBtn').classList.add('btn-success');
+            } else {
+                document.getElementById('nextBtn').textContent = 'Next →';
+                document.getElementById('nextBtn').classList.remove('btn-success');
+                document.getElementById('nextBtn').classList.add('btn-primary');
+            }
+        }
+        
+        async function nextStep() {
+            if (currentStep === 1) {
+                // Save credentials and start scan
+                config.credentials = {
+                    honeywellEmail: document.getElementById('honeywellEmail').value,
+                    honeywellPassword: document.getElementById('honeywellPassword').value,
+                    ringToken: document.getElementById('ringToken').value,
+                    shellyAuth: document.getElementById('shellyAuth').value
+                };
+                currentStep++;
+                updateProgress();
+                await runDiscovery();
+            } else if (currentStep === 2) {
+                // Move to Shelly config
+                currentStep++;
+                updateProgress();
+                renderShellyDevices();
+            } else if (currentStep === 3) {
+                // Save Shelly config, move to other devices
+                saveShellyConfig();
+                currentStep++;
+                updateProgress();
+                renderOtherDevices();
+            } else if (currentStep === 4) {
+                // Save other config, show summary
+                saveOtherConfig();
+                currentStep++;
+                updateProgress();
+                renderSummary();
+            } else if (currentStep === totalSteps) {
+                // Save and finish
+                await saveConfiguration();
+            }
+        }
+        
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateProgress();
+            }
+        }
+        
+        async function runDiscovery() {
+            document.getElementById('scanStatus').style.display = 'flex';
+            document.getElementById('scanResults').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/discover', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config.credentials)
+                });
+                
+                discoveredDevices = await response.json();
+                
+                const total = discoveredDevices.shelly.length + 
+                              discoveredDevices.honeywell.length + 
+                              discoveredDevices.ring.length + 
+                              discoveredDevices.piaware.length;
+                
+                document.getElementById('totalDevices').textContent = total;
+                document.getElementById('scanStatus').style.display = 'none';
+                document.getElementById('scanResults').style.display = 'block';
+                
+            } catch (err) {
+                console.error('Discovery error:', err);
+                document.getElementById('scanStatus').innerHTML = `
+                    <div class="alert alert-warning">
+                        ⚠️ Discovery failed. You can add devices manually.
+                    </div>
+                `;
+            }
+        }
+        
+        function renderShellyDevices() {
+            const container = document.getElementById('shellyDevices');
+            
+            if (discoveredDevices.shelly.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-warning">
+                        No Shelly devices found. Make sure they're connected to your network.
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = discoveredDevices.shelly.map((device, i) => `
+                <div class="device-item">
+                    <input type="checkbox" class="device-checkbox" id="shelly-${i}" checked>
+                    <div class="device-icon">
+                        <select id="shelly-icon-${i}" style="font-size: 1.5rem; background: none; border: none;">
+                            ${iconOptions.map(icon => `<option value="${icon}" ${icon === '💡' ? 'selected' : ''}>${icon}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="device-info">
+                        <input type="text" id="shelly-name-${i}" value="${device.name || device.id}" 
+                               style="background: none; border: none; color: white; font-weight: 600; font-size: 1rem;">
+                        <div class="device-details">
+                            ${device.ip} · ${device.model || 'Shelly'} · Gen${device.gen}
+                        </div>
+                    </div>
+                    <div class="device-config">
+                        <select id="shelly-room-${i}">
+                            ${roomOptions.map(room => `<option value="${room}">${room}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function saveShellyConfig() {
+            config.shelly = discoveredDevices.shelly
+                .map((device, i) => {
+                    if (!document.getElementById(`shelly-${i}`).checked) return null;
+                    return {
+                        ...device,
+                        name: document.getElementById(`shelly-name-${i}`).value,
+                        icon: document.getElementById(`shelly-icon-${i}`).value,
+                        room: document.getElementById(`shelly-room-${i}`).value
+                    };
+                })
+                .filter(d => d !== null);
+        }
+        
+        function renderOtherDevices() {
+            // Honeywell
+            if (discoveredDevices.honeywell.length > 0) {
+                document.getElementById('honeywellSection').style.display = 'block';
+                document.getElementById('thermostatCount').textContent = discoveredDevices.honeywell.length;
+                document.getElementById('honeywellDevices').innerHTML = discoveredDevices.honeywell.map((device, i) => `
+                    <div class="device-item">
+                        <input type="checkbox" class="device-checkbox" id="honeywell-${i}" checked>
+                        <div class="device-icon">🌡️</div>
+                        <div class="device-info">
+                            <input type="text" id="honeywell-name-${i}" value="${device.name}" 
+                                   style="background: none; border: none; color: white; font-weight: 600;">
+                            <div class="device-details">ID: ${device.id}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Ring
+            if (discoveredDevices.ring.length > 0) {
+                document.getElementById('ringSection').style.display = 'block';
+                document.getElementById('ringCount').textContent = discoveredDevices.ring.length;
+                document.getElementById('ringDevices').innerHTML = discoveredDevices.ring.map((device, i) => `
+                    <div class="device-item">
+                        <input type="checkbox" class="device-checkbox" id="ring-${i}" checked>
+                        <div class="device-icon">${device.type === 'doorbell' ? '🚪' : '📹'}</div>
+                        <div class="device-info">
+                            <input type="text" id="ring-name-${i}" value="${device.name}" 
+                                   style="background: none; border: none; color: white; font-weight: 600;">
+                            <div class="device-details">${device.model} · ${device.type}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // PiAware
+            if (discoveredDevices.piaware.length > 0) {
+                document.getElementById('piawareSection').style.display = 'block';
+                document.getElementById('piawareCount').textContent = discoveredDevices.piaware.length;
+                document.getElementById('piawareDevices').innerHTML = discoveredDevices.piaware.map((device, i) => `
+                    <div class="device-item">
+                        <input type="checkbox" class="device-checkbox" id="piaware-${i}" checked>
+                        <div class="device-icon">✈️</div>
+                        <div class="device-info">
+                            <div class="device-name">PiAware ADS-B Receiver</div>
+                            <div class="device-details">${device.ip}:${device.port}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // No devices message
+            if (discoveredDevices.honeywell.length === 0 && 
+                discoveredDevices.ring.length === 0 && 
+                discoveredDevices.piaware.length === 0) {
+                document.getElementById('noDevices').style.display = 'block';
+            }
+        }
+        
+        function saveOtherConfig() {
+            config.honeywell = discoveredDevices.honeywell
+                .map((device, i) => {
+                    if (!document.getElementById(`honeywell-${i}`)?.checked) return null;
+                    return {
+                        ...device,
+                        name: document.getElementById(`honeywell-name-${i}`).value
+                    };
+                })
+                .filter(d => d !== null);
+            
+            config.ring = discoveredDevices.ring
+                .map((device, i) => {
+                    if (!document.getElementById(`ring-${i}`)?.checked) return null;
+                    return {
+                        ...device,
+                        name: document.getElementById(`ring-name-${i}`).value
+                    };
+                })
+                .filter(d => d !== null);
+            
+            config.piaware = discoveredDevices.piaware
+                .filter((device, i) => document.getElementById(`piaware-${i}`)?.checked);
+        }
+        
+        function renderSummary() {
+            document.getElementById('summaryShellyList').innerHTML = 
+                config.shelly.length === 0 
+                    ? '<li>No devices configured</li>'
+                    : config.shelly.map(d => `<li>${d.icon} ${d.name} (${d.room})</li>`).join('');
+            
+            document.getElementById('summaryThermostatList').innerHTML = 
+                config.honeywell.length === 0 
+                    ? '<li>No thermostats configured</li>'
+                    : config.honeywell.map(d => `<li>🌡️ ${d.name}</li>`).join('');
+            
+            document.getElementById('summaryRingList').innerHTML = 
+                config.ring.length === 0 
+                    ? '<li>No cameras configured</li>'
+                    : config.ring.map(d => `<li>${d.type === 'doorbell' ? '🚪' : '📹'} ${d.name}</li>`).join('');
+            
+            document.getElementById('summaryPiawareList').innerHTML = 
+                config.piaware.length === 0 
+                    ? '<li>No flight tracking configured</li>'
+                    : config.piaware.map(d => `<li>✈️ ${d.ip}:${d.port}</li>`).join('');
+        }
+        
+        async function saveConfiguration() {
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('nextBtn').textContent = 'Saving...';
+            
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                if (response.ok) {
+                    // Redirect to dashboard
+                    window.location.href = '/';
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (err) {
+                alert('Error saving configuration. Please try again.');
+                document.getElementById('nextBtn').disabled = false;
+                document.getElementById('nextBtn').textContent = '🚀 Save & Start';
+            }
+        }
+        
+        // Initialize
+        updateProgress();
+    </script>
+</body>
+</html>

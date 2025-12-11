@@ -1,0 +1,25 @@
+{
+  "name": "nexus-api",
+  "version": "2.0.0",
+  "description": "NEXUS Smart Home Dashboard API with Auto-Discovery",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "discover": "node discovery.js --all",
+    "discover:shelly": "node discovery.js --shelly",
+    "discover:honeywell": "node discovery.js --honeywell",
+    "discover:ring": "node discovery.js --ring",
+    "discover:piaware": "node discovery.js --piaware"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.7.0",
+    "ring-client-api": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Henrik Pedersen",
+  "license": "MIT"
+}
