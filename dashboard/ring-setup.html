@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ring Doorbell Setup Guide - NEXUS Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a9fff, #0066cc);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        
+        .platform-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .platform-tab {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .platform-tab:hover { border-color: #1a9fff; }
+        .platform-tab.active {
+            border-color: #1a9fff;
+            background: #e8f4ff;
+        }
+        .platform-tab .icon { font-size: 2rem; display: block; margin-bottom: 5px; }
+        
+        .platform-content { display: none; }
+        .platform-content.active { display: block; }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #1a9fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .step-num {
+            background: #1a9fff;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .instruction {
+            background: #f8f9fa;
+            border-left: 4px solid #1a9fff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .command-box {
+            background: #1e1e1e;
+            color: #4ec9b0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.95rem;
+            margin: 15px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+        .command-box::before {
+            content: '$ ';
+            color: #888;
+        }
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .copy-btn:hover { background: #555; }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .warning::before { content: '⚠️ '; }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .success::before { content: '✅ '; }
+        
+        .screenshot {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #1e1e1e;
+            color: #ccc;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        .screenshot .prompt { color: #4ec9b0; }
+        .screenshot .input { color: #ce9178; }
+        .screenshot .highlight { color: #ffd700; background: rgba(255,215,0,0.2); padding: 2px 4px; }
+        
+        .final-step {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+        .final-step h2 { color: white; }
+        
+        ol, ul { margin-left: 20px; margin-top: 10px; }
+        li { margin-bottom: 8px; }
+        
+        .download-link {
+            display: inline-block;
+            background: #1a9fff;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px 5px 10px 0;
+        }
+        .download-link:hover { background: #0066cc; }
+        
+        @media print {
+            body { background: white; }
+            .platform-tabs { display: none; }
+            .platform-content { display: block !important; }
+            .platform-content::before {
+                content: attr(data-platform);
+                font-size: 1.5rem;
+                font-weight: bold;
+                display: block;
+                margin: 20px 0;
+                padding-top: 20px;
+                border-top: 2px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔔 Ring Doorbell Setup Guide</h1>
+        <p>Connect your Ring doorbell to your NEXUS Dashboard</p>
+    </div>
+    
+    <div class="platform-tabs">
+        <div class="platform-tab active" onclick="showPlatform('windows')">
+            <span class="icon">🪟</span>
+            Windows PC
+        </div>
+        <div class="platform-tab" onclick="showPlatform('mac')">
+            <span class="icon">🍎</span>
+            Mac
+        </div>
+    </div>
+    
+    <!-- WINDOWS INSTRUCTIONS -->
+    <div id="windows" class="platform-content active" data-platform="Windows Instructions">
+        
+        <div class="card">
+            <h2><span class="step-num">1</span> Install Node.js</h2>
+            <p>Node.js is a free program that lets us run the Ring connection tool.</p>
+            
+            <div class="instruction">
+                <ol>
+                    <li>Go to <a href="https://nodejs.org" target="_blank"><strong>nodejs.org</strong></a></li>
+                    <li>Click the big green button that says <strong>"LTS"</strong> (recommended)</li>
+                    <li>Open the downloaded file and follow the installer</li>
+                    <li>Click "Next" through all the screens, then "Install"</li>
+                    <li>When done, click "Finish"</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="step-num">2</span> Open Command Prompt</h2>
+            <p>We need to open a window where we can type commands.</p>
+            
+            <div class="instruction">
+                <ol>
+                    <li>Press the <strong>Windows key</strong> on your keyboard (⊞)</li>
+                    <li>Type: <strong>cmd</strong></li>
+                    <li>Click on <strong>"Command Prompt"</strong> in the results</li>
+                </ol>
+            </div>
+            
+            <p>A black window will open. This is where you'll type the next command.</p>
+        </div>
+        
+        <div class="card">
+            <h2><span class="step-num">3</span> Run the Ring Tool</h2>
+            <p>Copy and paste this command into the black window, then press Enter:</p>
+            
+            <div class="command-box" onclick="copyCommand(this)">
+                npx -p ring-client-api ring-auth-cli
+                <button class="copy-btn">Copy</button>
+            </div>
+            
+            <div class="warning">
+                The first time you run this, it may ask "Ok to proceed? (y)" — type <strong>y</strong> and press Enter.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="step-num">4</span> Enter Your Ring Credentials</h2>
+            <p>The tool will ask you for information. Type each answer and press Enter:</p>
+            
+            <div class="screenshot">
+<span class="prompt">Email:</span> <span class="input">your.email@example.com</span>
+<span class="prompt">Password:</span> <span class="input">••••••••</span> (your Ring password - it won't show as you type)
+
+Waiting for 2FA code...
+<span class="prompt">2FA Code:</span> <span class="input">123456</span> (check your phone for a text/notification from Ring)
+
+<span class="highlight">Refresh Token: eyJhbGc...very_long_text_here...xYz123</span>
+            </div>
+            
+            <div class="success">
+                <strong>Copy the entire Refresh Token</strong> — this is what you need!<br>
+                Triple-click to select the whole line, then Ctrl+C to copy.
+            </div>
+        </div>
+    </div>
+    
+    <!-- MAC INSTRUCTIONS -->
+    <div id="mac" class="platform-content" data-platform="Mac Instructions">
+        
+        <div class="card">
+            <h2><span class="step-num">1</span> Install Node.js</h2>
+            <p>Node.js is a free program that lets us run the Ring connection tool.</p>
+            
+            <div class="instruction">
+                <ol>
+                    <li>Go to <a href="https://nodejs.org" target="_blank"><strong>nodejs.org</strong></a></li>
+                    <li>Click the big green button that says <strong>"LTS"</strong> (recommended)</li>
+                    <li>Open the downloaded <strong>.pkg</strong> file</li>
+                    <li>Follow the installer steps, clicking "Continue" and "Install"</li>
+                    <li>Enter your Mac password if asked</li>
+                    <li>Click "Close" when done</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="step-num">2</span> Open Terminal</h2>
+            <p>We need to open a window where we can type commands.</p>
+            
+            <div class="instruction">
+                <ol>
+                    <li>Press <strong>Command (⌘) + Space</strong> to open Spotlight</li>
+                    <li>Type: <strong>Terminal</strong></li>
+                    <li>Press <strong>Enter</strong> or click on Terminal</li>
+                </ol>
+            </div>
+            
+            <p>A white/black window will open. This is where you'll type the next command.</p>
+        </div>
+        
+        <div class="card">
+            <h2><span class="step-num">3</span> Run the Ring Tool</h2>
+            <p>Copy and paste this command into the Terminal window, then press Enter:</p>
+            
+            <div class="command-box" onclick="copyCommand(this)">
+                npx -p ring-client-api ring-auth-cli
+                <button class="copy-btn">Copy</button>
+            </div>
+            
+            <div class="warning">
+                The first time you run this, it may ask "Ok to proceed? (y)" — type <strong>y</strong> and press Enter.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><span class="step-num">4</span> Enter Your Ring Credentials</h2>
+            <p>The tool will ask you for information. Type each answer and press Enter:</p>
+            
+            <div class="screenshot">
+<span class="prompt">Email:</span> <span class="input">your.email@example.com</span>
+<span class="prompt">Password:</span> <span class="input">••••••••</span> (your Ring password - it won't show as you type)
+
+Waiting for 2FA code...
+<span class="prompt">2FA Code:</span> <span class="input">123456</span> (check your phone for a text/notification from Ring)
+
+<span class="highlight">Refresh Token: eyJhbGc...very_long_text_here...xYz123</span>
+            </div>
+            
+            <div class="success">
+                <strong>Copy the entire Refresh Token</strong> — this is what you need!<br>
+                Triple-click to select the whole line, then Command+C to copy.
+            </div>
+        </div>
+    </div>
+    
+    <!-- FINAL STEP - BOTH PLATFORMS -->
+    <div class="final-step">
+        <h2>🎉 Final Step: Add Token to NEXUS</h2>
+        <ol>
+            <li>Open your <strong>NEXUS Dashboard</strong> in a web browser</li>
+            <li>Click the <strong>⚙️ Settings</strong> button (top right)</li>
+            <li>Click the <strong>🚪 Ring</strong> tab</li>
+            <li>Click the <strong>"🔑 Paste Token"</strong> button</li>
+            <li><strong>Paste</strong> your token into the text box</li>
+            <li>Click <strong>"💾 Save Token"</strong></li>
+        </ol>
+        <p style="margin-top: 15px;">Your Ring doorbell should now appear on your dashboard! 🎊</p>
+    </div>
+    
+    <div class="card" style="margin-top: 20px;">
+        <h2>❓ Troubleshooting</h2>
+        <ul>
+            <li><strong>"npm/npx not found"</strong> — Restart your computer after installing Node.js</li>
+            <li><strong>"Invalid password"</strong> — Make sure you're using your Ring password, not your Amazon password</li>
+            <li><strong>No 2FA code received</strong> — Check your Ring app notifications, or your email/SMS</li>
+            <li><strong>Token doesn't work</strong> — Generate a new token; they can expire if not used quickly</li>
+        </ul>
+    </div>
+    
+    <script>
+        function showPlatform(platform) {
+            // Update tabs
+            document.querySelectorAll('.platform-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.closest('.platform-tab').classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.platform-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(platform).classList.add('active');
+        }
+        
+        function copyCommand(element) {
+            const text = element.textContent.replace('Copy', '').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = element.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+    </script>
+</body>
+</html>

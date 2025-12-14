@@ -1,0 +1,43 @@
+{
+  "_version": 2,
+  "_comment": "This is an example config. Your actual config.json will be auto-generated and preserved across updates.",
+  "shelly": [
+    {
+      "id": "shelly1pmg3-example",
+      "name": "Example Light",
+      "ip": "192.168.1.100",
+      "gen": 3,
+      "room": "Living Room"
+    }
+  ],
+  "honeywell": [],
+  "ring": [],
+  "piaware": [{
+    "id": "local",
+    "name": "Local PiAware",
+    "url": "http://192.168.1.100:8080/skyaware/data/aircraft.json"
+  }],
+  "flightTracking": {
+    "enabled": true,
+    "source": "remote",
+    "url": "http://192.168.1.100:8080/skyaware/data/aircraft.json"
+  },
+  "location": {
+    "address": "123 Main St, City, ST 12345",
+    "lat": 35.0,
+    "lon": -78.0
+  },
+  "scenes": [
+    {
+      "id": "morning",
+      "name": "Morning",
+      "icon": "🌅",
+      "actions": []
+    }
+  ],
+  "settings": {
+    "ringSnapshotInterval": 30,
+    "theme": "dark",
+    "temperatureUnit": "F"
+  }
+}

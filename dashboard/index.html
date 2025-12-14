@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEXUS | 332 Bridgegate Dr</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #0f1623;
+            --bg-card: rgba(15, 25, 45, 0.85);
+            --accent-cyan: #00f0ff;
+            --accent-blue: #0066ff;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #ff6b35;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-yellow: #ffd93d;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-dim: rgba(255, 255, 255, 0.4);
+            --border-glow: rgba(0, 240, 255, 0.3);
+            --shadow-glow: 0 0 30px rgba(0, 240, 255, 0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .bg-glow-1 { background: var(--accent-cyan); top: -200px; left: -200px; }
+        .bg-glow-2 { background: var(--accent-purple); bottom: -200px; right: -200px; }
+
+        .dashboard {
+            position: relative;
+            z-index: 1;
+            padding: 15px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--bg-card);
+            border-radius: 15px;
+            border: 1px solid var(--border-glow);
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .address {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-badge.connected {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .status-badge.disconnected {
+            background: rgba(255, 51, 102, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .clock {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 500;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+            font-variant-numeric: tabular-nums;
+            min-width: 180px;
+            text-align: right;
+        }
+
+        .clock-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            border: 1px solid var(--border-glow);
+            padding: 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-glow);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Ring Camera Styles */
+        .ring-camera { grid-column: span 2; }
+        .ring-container { padding: 10px; }
+        .ring-snapshot-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .ring-snapshot {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .ring-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        .ring-info {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 10px;
+        }
+        .ring-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .ring-info-item span:first-child { font-size: 1.1rem; }
+        .ring-status { font-size: 0.8rem; color: var(--text-dim); }
+        .ring-status.live { color: var(--accent-green); }
+        .ring-motion {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--accent-red);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .weather-display { padding: 15px; }
+        .weather-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .weather-icon-large {
+            font-size: 4rem;
+            line-height: 1;
+            filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.3));
+        }
+        .weather-current { text-align: left; }
+        .weather-temp {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+            line-height: 1;
+        }
+        .weather-condition { 
+            font-size: 1rem; 
+            color: var(--text-secondary); 
+            margin-top: 4px;
+            text-transform: capitalize;
+        }
+        .weather-stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(0, 240, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+        }
+        .weather-stat { text-align: center; }
+        .weather-stat-icon { font-size: 1.2rem; margin-bottom: 4px; }
+        .weather-stat-value { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+        .weather-stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+        .weather-status { font-size: 0.8rem; color: var(--text-dim); }
+        .weather-forecast {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding-top: 5px;
+        }
+        .forecast-item {
+            text-align: center;
+            flex: 1;
+            padding: 5px;
+        }
+        .forecast-day { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; }
+        .forecast-icon { font-size: 1.5rem; margin: 5px 0; }
+        .forecast-temps { font-size: 0.85rem; }
+        .forecast-high { font-weight: 600; color: var(--text-primary); }
+        .forecast-low { color: var(--text-dim); }
+
+        /* Recipe Widget */
+        .recipe-card { cursor: pointer; transition: all 0.3s ease; }
+        .recipe-card:hover { transform: translateY(-3px); border-color: var(--accent-orange); }
+        .recipe-widget {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+        .recipe-icon { font-size: 3rem; margin-bottom: 10px; }
+        .recipe-text { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+        .recipe-subtext { font-size: 0.85rem; color: var(--text-dim); margin-top: 5px; }
+
+        .room-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .room-btn {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            background: rgba(0, 240, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .room-btn:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--accent-cyan); }
+        .room-btn.active { background: rgba(0, 255, 136, 0.15); border-color: var(--accent-green); }
+        .room-icon { font-size: 1.4rem; margin-bottom: 5px; }
+        .room-name { font-size: 0.9rem; font-weight: 600; }
+
+        /* Kitchen Lights */
+        .kitchen-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+        .kitchen-btn {
+            padding: 15px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            background: rgba(0, 240, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .kitchen-btn:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--accent-cyan); }
+        .kitchen-btn.active { background: rgba(255, 200, 50, 0.2); border-color: var(--accent-yellow); box-shadow: 0 0 15px rgba(255, 200, 50, 0.3); }
+        .kitchen-btn.loading { opacity: 0.5; pointer-events: none; }
+        .kitchen-icon { font-size: 1.6rem; margin-bottom: 6px; }
+        .kitchen-name { font-size: 0.95rem; font-weight: 600; }
+        .kitchen-power { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+        .kitchen-all { border-color: var(--accent-purple); }
+        .kitchen-all.active { background: rgba(139, 92, 246, 0.2); border-color: var(--accent-purple); box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
+        .shelly-status { font-size: 0.8rem; color: var(--text-dim); }
+
+        .scene-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .scene-btn {
+            padding: 15px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            background: rgba(0, 240, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .scene-btn:hover { background: rgba(0, 240, 255, 0.15); border-color: var(--accent-cyan); transform: translateY(-2px); }
+        .scene-icon { font-size: 1.6rem; margin-bottom: 6px; }
+        .scene-name { font-size: 0.95rem; font-weight: 600; }
+
+        .thermostat { display: flex; flex-direction: column; align-items: center; padding: 15px; }
+        .thermostat-zones { display: flex; flex-direction: column; gap: 12px; padding: 10px; }
+        .thermostat-zone {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 12px;
+            border-left: 3px solid var(--accent-cyan);
+            overflow: hidden;
+        }
+        .thermostat-zone.heating { border-left-color: var(--accent-orange); }
+        .thermostat-zone.cooling { border-left-color: var(--accent-blue); }
+        .zone-temps {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 70px;
+        }
+        .zone-current {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            line-height: 1;
+        }
+        .zone-target {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        .zone-info { flex: 1; min-width: 0; overflow: hidden; }
+        .zone-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .zone-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .zone-mode {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .zone-mode.heat { background: rgba(255, 107, 53, 0.2); color: var(--accent-orange); }
+        .zone-mode.cool { background: rgba(0, 102, 255, 0.2); color: var(--accent-blue); }
+        .zone-mode.auto { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .zone-mode.off { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); }
+        .zone-mode.heating { background: rgba(255, 107, 53, 0.3); color: var(--accent-orange); }
+        .zone-mode.cooling { background: rgba(0, 102, 255, 0.3); color: var(--accent-blue); }
+        .thermostat-loading { text-align: center; padding: 30px; color: var(--text-secondary); }
+        .thermostat-status { font-size: 0.8rem; color: var(--text-dim); }
+        .thermostat-outdoor {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            margin-top: 8px;
+            border-top: 1px solid rgba(0, 240, 255, 0.1);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .thermostat-outdoor span { color: var(--text-primary); font-weight: 600; }
+        .thermostat-dial {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: conic-gradient(from 180deg, var(--accent-cyan), var(--accent-green), var(--accent-orange), var(--accent-red), var(--accent-cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .thermostat-inner {
+            width: 105px;
+            height: 105px;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .thermostat-temp { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 700; color: var(--accent-cyan); }
+        .thermostat-mode { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 500; }
+        .thermostat-controls { display: flex; gap: 15px; margin-top: 12px; }
+        .temp-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border-glow);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .temp-btn:hover { background: var(--accent-cyan); color: var(--bg-primary); }
+
+        /* Flight Tracker Styles */
+        .flight-tracker { grid-column: span 2; }
+        .flight-container { max-height: 380px; overflow-y: auto; }
+        .flight-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-purple);
+            transition: all 0.3s ease;
+        }
+        .flight-item.overhead {
+            background: rgba(0, 255, 136, 0.15);
+            border-left-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            animation: pulse-overhead 2s ease-in-out infinite;
+        }
+        @keyframes pulse-overhead {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 136, 0.5); }
+        }
+        .overhead-badge {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .flight-icon {
+            font-size: 1.8rem;
+            transform: rotate(45deg);
+        }
+        .flight-info { flex: 1; }
+        .flight-callsign {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+        .flight-route {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 3px 0;
+        }
+        .flight-details {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        .flight-detail {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        .flight-detail span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .flight-altitude {
+            text-align: right;
+        }
+        .flight-alt-value {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+        }
+        .flight-alt-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        .no-flights {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        .flight-count {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .online-badge {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .offline-badge {
+            background: rgba(255, 51, 102, 0.15);
+            color: var(--accent-red);
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 3px; }
+
+        /* Kiosk Mode */
+        .kiosk-btn {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+        .kiosk-btn:hover {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--accent-cyan);
+        }
+        .kiosk-btn.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: var(--accent-green);
+        }
+        
+        body.kiosk-mode {
+            cursor: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+        body.kiosk-mode .kiosk-btn { display: none; }
+        body.kiosk-mode .header { padding: 10px 20px; }
+        body.kiosk-mode.show-cursor { cursor: default; }
+        
+        .kiosk-exit-hint {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 15px;
+            padding: 30px 50px;
+            z-index: 9999;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .kiosk-exit-hint h2 { color: var(--accent-cyan); margin-bottom: 15px; }
+        .kiosk-exit-hint p { color: var(--text-secondary); margin-bottom: 20px; }
+        .kiosk-exit-hint button {
+            background: var(--accent-red);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Tablet Landscape (10" tablets ~1280x800) - NO SCROLL LAYOUT */
+        @media (min-width: 769px) and (max-width: 1400px) and (max-height: 900px) {
+            html, body {
+                overflow: hidden;
+                height: 100vh;
+            }
+            
+            .dashboard {
+                padding: 6px;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            
+            .header {
+                padding: 6px 12px;
+                margin-bottom: 6px;
+                flex-shrink: 0;
+            }
+            .logo { font-size: 1.2rem; }
+            .address { font-size: 0.65rem; }
+            .clock { font-size: 1.5rem; }
+            .clock-date { font-size: 0.65rem; }
+            .kiosk-btn { padding: 4px 6px; font-size: 0.9rem; }
+            
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: 1fr 1fr;
+                gap: 6px;
+                flex: 1;
+                min-height: 0;
+            }
+            
+            .card {
+                padding: 8px;
+                border-radius: 8px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .card-header {
+                margin-bottom: 6px;
+                padding-bottom: 4px;
+                flex-shrink: 0;
+            }
+            .card-title { font-size: 0.7rem; }
+            
+            /* Ring camera - top left 2x1 */
+            .ring-camera {
+                grid-column: span 2;
+                grid-row: span 1;
+            }
+            .ring-container {
+                padding: 0;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .ring-snapshot-wrapper {
+                flex: 1;
+                min-height: 0;
+                aspect-ratio: auto;
+                margin-bottom: 4px;
+            }
+            .ring-snapshot {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .ring-info {
+                padding: 4px 8px;
+                flex-shrink: 0;
+            }
+            .ring-info-item { font-size: 0.65rem; }
+            
+            /* Flight tracker - top right 2x1 */
+            .flight-tracker {
+                grid-column: span 2;
+                grid-row: span 1;
+            }
+            .flight-container {
+                flex: 1;
+                overflow-y: auto;
+                min-height: 0;
+            }
+            .flight-item {
+                padding: 4px 6px;
+                margin-bottom: 3px;
+                gap: 6px;
+            }
+            .flight-icon { font-size: 1rem; }
+            .flight-callsign { font-size: 0.75rem; }
+            .flight-route { font-size: 0.65rem; }
+            .flight-details { gap: 6px; }
+            .flight-detail { font-size: 0.6rem; }
+            .flight-alt-value { font-size: 0.85rem; }
+            .flight-count { font-size: 0.6rem; padding: 2px 6px; }
+            
+            /* Weather - bottom row */
+            .weather-icon-large { font-size: 1.5rem; }
+            .weather-temp { font-size: 1.8rem; }
+            .weather-condition { font-size: 0.65rem; margin-bottom: 4px; }
+            .weather-stats { gap: 6px; margin-bottom: 4px; }
+            .weather-stat-value { font-size: 0.8rem; }
+            .weather-stat-label { font-size: 0.55rem; }
+            .weather-forecast { gap: 3px; margin-top: 4px; }
+            .forecast-item { padding: 3px; min-width: 40px; }
+            .forecast-day { font-size: 0.55rem; }
+            .forecast-icon { font-size: 0.85rem; }
+            .forecast-temps { font-size: 0.55rem; }
+            
+            /* Climate/Thermostat - bottom row */
+            .thermostat-zones {
+                padding: 0;
+                gap: 4px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .thermostat-zone {
+                padding: 6px 8px;
+                gap: 8px;
+                flex: 1;
+            }
+            .zone-current { font-size: 1.2rem; }
+            .zone-target { font-size: 0.6rem; }
+            .zone-name { font-size: 0.7rem; }
+            .zone-details { font-size: 0.6rem; gap: 4px; }
+            .zone-details span { padding: 1px 4px; }
+            .thermostat-outdoor { font-size: 0.6rem; padding: 4px; }
+            
+            /* Kitchen lights - bottom row */
+            .kitchen-grid {
+                padding: 0;
+                gap: 4px;
+                flex: 1;
+            }
+            .kitchen-btn {
+                padding: 6px 4px;
+            }
+            .kitchen-icon { font-size: 1rem; margin-bottom: 2px; }
+            .kitchen-name { font-size: 0.65rem; }
+            .kitchen-power { font-size: 0.55rem; }
+            
+            /* Scenes - bottom row */
+            .scene-grid {
+                gap: 4px;
+                flex: 1;
+            }
+            .scene-btn {
+                padding: 6px 4px;
+            }
+            .scene-icon { font-size: 1rem; margin-bottom: 2px; }
+            .scene-name { font-size: 0.65rem; }
+            
+            /* Hide recipe card on tablet to save space */
+            .recipe-card { display: none; }
+        }
+        
+        /* Tablet Portrait - stack everything */
+        @media (min-width: 600px) and (max-width: 900px) and (orientation: portrait) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .ring-camera, .flight-tracker { grid-column: span 2; }
+        }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .ring-camera, .flight-tracker { grid-column: span 1; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+        }
+        /* Settings Modal */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .settings-modal.active { display: flex; }
+        .settings-content {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-glow);
+        }
+        .settings-header h2 { margin: 0; color: var(--accent-cyan); }
+        .settings-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .settings-close:hover { color: var(--accent-red); }
+        .settings-section { margin-bottom: 20px; }
+        .settings-section h3 {
+            color: var(--text-bright);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .device-setting {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .device-setting input,
+        .device-setting select {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-bright);
+            font-size: 0.9rem;
+        }
+        .device-setting input:focus,
+        .device-setting select:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+        .device-setting select option {
+            background: var(--bg-secondary);
+            color: var(--text-bright);
+        }
+        .device-setting .device-ip {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            min-width: 100px;
+        }
+        .settings-btn {
+            background: rgba(0, 240, 255, 0.2);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 10px 20px;
+            color: var(--text-bright);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .settings-btn:hover {
+            background: rgba(0, 240, 255, 0.3);
+        }
+        .settings-btn.save {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: var(--accent-green);
+        }
+        .settings-btn.danger {
+            background: rgba(255, 51, 102, 0.2);
+            border-color: var(--accent-red);
+        }
+        .settings-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-glow);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .upload-area {
+            transition: all 0.3s ease;
+        }
+        .upload-area.drag-over > div {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
+        }
+        .update-log {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .settings-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-glow);
+            padding-bottom: 10px;
+        }
+        .settings-tab {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px 8px 0 0;
+            padding: 8px 16px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .settings-tab:hover {
+            color: var(--text-bright);
+            background: rgba(0, 240, 255, 0.1);
+        }
+        .settings-tab.active {
+            color: var(--accent-cyan);
+            border-color: var(--border-glow);
+            border-bottom-color: transparent;
+            background: rgba(0, 240, 255, 0.1);
+        }
+        .settings-tab-content {
+            display: none;
+        }
+        .settings-tab-content.active {
+            display: block;
+        }
+        .device-setting label {
+            min-width: 80px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .device-item-info {
+            flex: 1;
+        }
+        .device-item-name {
+            color: var(--text-bright);
+            font-weight: 500;
+        }
+        .device-item-detail {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+        .device-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .device-item-btn {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--border-glow);
+            border-radius: 4px;
+            padding: 4px 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .device-item-btn:hover {
+            background: rgba(0, 240, 255, 0.2);
+        }
+        .device-item-btn.remove:hover {
+            background: rgba(255, 51, 102, 0.2);
+            border-color: var(--accent-red);
+        }
+        .settings-status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+        .settings-status.success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+        .settings-status.error {
+            background: rgba(255, 51, 102, 0.1);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+        .settings-status.info {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    
+    <div class="kiosk-exit-hint" id="kioskExitHint">
+        <h2>🔒 Kiosk Mode Active</h2>
+        <p>Triple-tap anywhere to show this menu</p>
+        <button onclick="exitKiosk()">Exit Kiosk Mode</button>
+    </div>
+
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>⚙️ Settings</h2>
+                <button class="settings-close" onclick="closeSettings()">&times;</button>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="settings-tabs">
+                <button class="settings-tab active" onclick="showSettingsTab('shelly')">💡 Shelly</button>
+                <button class="settings-tab" onclick="showSettingsTab('honeywell')">🌡️ Thermostats</button>
+                <button class="settings-tab" onclick="showSettingsTab('ring')">🚪 Ring</button>
+                <button class="settings-tab" onclick="showSettingsTab('other')">⚙️ System</button>
+            </div>
+            
+            <!-- Shelly Tab -->
+            <div class="settings-tab-content active" id="tab-shelly">
+                <div class="settings-section">
+                    <h3>Shelly Devices</h3>
+                    <div id="shellyDeviceList"></div>
+                    <button class="settings-btn" onclick="discoverDevices('shelly')" id="discoverShellyBtn">
+                        🔍 Discover Shelly Devices
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Honeywell Tab -->
+            <div class="settings-tab-content" id="tab-honeywell">
+                <div class="settings-section">
+                    <h3>Honeywell Credentials</h3>
+                    <div class="device-setting">
+                        <label>Email:</label>
+                        <input type="email" id="honeywellEmail" placeholder="your@email.com">
+                    </div>
+                    <div class="device-setting">
+                        <label>Password:</label>
+                        <input type="password" id="honeywellPassword" placeholder="••••••••">
+                    </div>
+                    <button class="settings-btn" onclick="saveHoneywellCredentials()">Save Credentials</button>
+                </div>
+                <div class="settings-section">
+                    <h3>Thermostats</h3>
+                    <div id="honeywellDeviceList"></div>
+                    <button class="settings-btn" onclick="discoverDevices('honeywell')" id="discoverHoneywellBtn">
+                        🔍 Discover Thermostats
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Ring Tab -->
+            <div class="settings-tab-content" id="tab-ring">
+                <div class="settings-section">
+                    <h3>Ring Authentication</h3>
+                    
+                    <!-- Method tabs -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="settings-btn" id="ringMethodLogin" onclick="showRingMethod('login')" style="flex: 1;">
+                            🔐 Login
+                        </button>
+                        <button class="settings-btn" id="ringMethodToken" onclick="showRingMethod('token')" style="flex: 1; opacity: 0.6;">
+                            🔑 Paste Token
+                        </button>
+                    </div>
+                    
+                    <!-- Login Method -->
+                    <div id="ringLoginMethod">
+                        <!-- Step 1: Email/Password -->
+                        <div id="ringAuthStep1">
+                            <div class="device-setting">
+                                <label>Email:</label>
+                                <input type="email" id="ringEmail" placeholder="Ring account email">
+                            </div>
+                            <div class="device-setting">
+                                <label>Password:</label>
+                                <input type="password" id="ringPassword" placeholder="Ring password">
+                            </div>
+                            <button class="settings-btn" onclick="ringRequestAuth()" id="ringAuthBtn">
+                                🔐 Connect to Ring
+                            </button>
+                            <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 10px;">
+                                ⚠️ If login fails, use "Paste Token" method instead
+                            </p>
+                        </div>
+                        
+                        <!-- Step 2: 2FA Code -->
+                        <div id="ringAuthStep2" style="display: none;">
+                            <p style="color: var(--accent-cyan); margin-bottom: 15px;">
+                                ✓ Check your phone/email for a 2FA code from Ring
+                            </p>
+                            <div class="device-setting">
+                                <label>2FA Code:</label>
+                                <input type="text" id="ring2FACode" placeholder="Enter 6-digit code" maxlength="6">
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="settings-btn" onclick="ringVerifyAuth()" id="ringVerifyBtn">
+                                    ✓ Verify Code
+                                </button>
+                                <button class="settings-btn" onclick="ringCancelAuth()">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Token Method -->
+                    <div id="ringTokenMethod" style="display: none;">
+                        <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 15px;">
+                            You need to generate a token on your computer first.
+                            <a href="/ring-setup.html" target="_blank" style="color: var(--accent-cyan);">
+                                📖 View Step-by-Step Guide
+                            </a>
+                        </p>
+                        <div class="device-setting">
+                            <label>Token:</label>
+                            <input type="password" id="ringToken" placeholder="Paste refresh token here">
+                        </div>
+                        <button class="settings-btn" onclick="saveRingToken()">
+                            💾 Save Token
+                        </button>
+                    </div>
+                    
+                    <!-- Already connected -->
+                    <div id="ringAuthConnected" style="display: none;">
+                        <p style="color: var(--accent-green); margin-bottom: 15px;">
+                            ✓ Ring is connected
+                        </p>
+                        <button class="settings-btn" onclick="ringDisconnect()">
+                            Disconnect Ring
+                        </button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Cameras &amp; Doorbells</h3>
+                    <div id="ringDeviceList"></div>
+                    <button class="settings-btn" onclick="discoverRingDevices()" id="discoverRingBtn">
+                        🔍 Discover Ring Devices
+                    </button>
+                </div>
+                <div class="settings-section">
+                    <h3>Snapshot Settings</h3>
+                    <div class="device-setting">
+                        <label>Refresh:</label>
+                        <select id="ringSnapshotInterval" onchange="saveRingSettings()">
+                            <option value="5">Every 5 seconds</option>
+                            <option value="10">Every 10 seconds</option>
+                            <option value="15" selected>Every 15 seconds</option>
+                            <option value="30">Every 30 seconds</option>
+                            <option value="60">Every minute</option>
+                            <option value="300">Every 5 minutes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Connection Status</h3>
+                    <div id="ringStatus">Checking...</div>
+                </div>
+            </div>
+            
+            <!-- System Tab -->
+            <div class="settings-tab-content" id="tab-other">
+                <div class="settings-section">
+                    <h3>🔄 System Update</h3>
+                    <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 15px;">
+                        Upload a NEXUS update package (.zip) to update the system.
+                    </p>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="updateZip" accept=".zip" style="display: none;" onchange="handleUpdateUpload(event)">
+                        <div onclick="document.getElementById('updateZip').click()" style="cursor: pointer; padding: 30px; border: 2px dashed var(--border-glow); border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📦</div>
+                            <div style="color: var(--text-bright);">Click to select update package</div>
+                            <div style="color: var(--text-dim); font-size: 0.8rem; margin-top: 5px;">or drag and drop</div>
+                        </div>
+                    </div>
+                    <div id="updateProgress" style="display: none; margin-top: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="spinner"></div>
+                            <span id="updateStatusText">Uploading...</span>
+                        </div>
+                    </div>
+                    <div id="updateResult" style="display: none; margin-top: 15px;"></div>
+                </div>
+                <div class="settings-section">
+                    <h3>📊 System Info</h3>
+                    <div id="systemInfo" style="font-size: 0.9rem; color: var(--text-secondary);">
+                        Loading...
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>🔧 Maintenance</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <button class="settings-btn" onclick="clearFlightCache()">Clear Flight Cache</button>
+                        <button class="settings-btn" onclick="location.reload()">Refresh Dashboard</button>
+                        <button class="settings-btn" onclick="restartApi()">Restart API</button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>⚠️ Danger Zone</h3>
+                    <button class="settings-btn danger" onclick="resetSystem()">Reset All Configuration</button>
+                </div>
+            </div>
+            
+            <div style="text-align: right; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-glow);">
+                <button class="settings-btn save" onclick="saveAllSettings()">Save All Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <header class="header">
+            <div>
+                <div class="logo">NEXUS</div>
+                <div class="address">&#x1F4CD; 332 Bridgegate Dr, Cary, NC 27519</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="kiosk-btn" id="kioskBtn" onclick="toggleKiosk()" title="Enter Kiosk Mode">
+                    <span>&#x1F4FA;</span>
+                </button>
+                <button class="kiosk-btn" onclick="openSettings()" title="Settings">
+                    <span>&#x2699;&#xFE0F;</span>
+                </button>
+                <button class="kiosk-btn" onclick="window.location.href='/.auth/logout'" title="Logout">
+                    <span>&#x1F6AA;</span>
+                </button>
+            </div>
+            <div>
+                <div class="clock" id="clock">00:00:00</div>
+                <div class="clock-date" id="clockDate">Loading...</div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Ring Doorbell Camera -->
+            <div class="card ring-camera">
+                <div class="card-header">
+                    <span class="card-title">🚪 Front Door</span>
+                    <span class="ring-status" id="ringStatus">Loading...</span>
+                </div>
+                <div class="ring-container" id="ringContainer">
+                    <div class="ring-snapshot-wrapper">
+                        <img id="ringSnapshot" class="ring-snapshot" src="" alt="Doorbell Camera" style="display: none;">
+                        <div class="ring-placeholder" id="ringPlaceholder">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">🔔</div>
+                            <div>Loading camera...</div>
+                        </div>
+                    </div>
+                    <div class="ring-info">
+                        <div class="ring-info-item">
+                            <span>🔋</span>
+                            <span id="ringBattery">--%</span>
+                        </div>
+                        <div class="ring-info-item">
+                            <span>📶</span>
+                            <span id="ringWifi">--</span>
+                        </div>
+                        <div class="ring-info-item">
+                            <span>🕐</span>
+                            <span id="ringLastUpdate">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flight Tracker -->
+            <div class="card flight-tracker">
+                <div class="card-header">
+                    <span class="card-title">&#x2708;&#xFE0F; PiAware Radar</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span id="routeStatus" class="flight-count" style="display: none;">&#x1F50D; Looking up routes...</span>
+                        <span id="flightCount" class="flight-count">0 aircraft</span>
+                    </div>
+                </div>
+                <div class="flight-container" id="flightContainer">
+                    <div class="no-flights">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">&#x2708;&#xFE0F;</div>
+                        Connecting to PiAware...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🌡️ Weather</span>
+                    <span class="weather-status" id="weatherStatus"></span>
+                </div>
+                <div class="weather-display" id="weatherDisplay">
+                    <div class="weather-main">
+                        <div class="weather-icon-large" id="weatherIconLarge">⛅</div>
+                        <div class="weather-current">
+                            <div class="weather-temp" id="weatherTemp">--°</div>
+                            <div class="weather-condition" id="weatherCondition">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="weather-stats">
+                        <div class="weather-stat">
+                            <div class="weather-stat-icon">💧</div>
+                            <div class="weather-stat-value" id="weatherHumidity">--%</div>
+                            <div class="weather-stat-label">Humidity</div>
+                        </div>
+                        <div class="weather-stat">
+                            <div class="weather-stat-icon">💨</div>
+                            <div class="weather-stat-value" id="weatherWind">-- mph</div>
+                            <div class="weather-stat-label">Wind</div>
+                        </div>
+                        <div class="weather-stat">
+                            <div class="weather-stat-icon">🌡️</div>
+                            <div class="weather-stat-value" id="weatherFeelsLike">--°</div>
+                            <div class="weather-stat-label">Feels Like</div>
+                        </div>
+                    </div>
+                    <div class="weather-forecast" id="weatherForecast"></div>
+                </div>
+            </div>
+
+            <!-- Devices (Dynamic) -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💡 Devices</span>
+                    <span class="shelly-status" id="devicesStatus"></span>
+                </div>
+                <div class="kitchen-grid" id="devicesGrid">
+                    <div style="text-align: center; color: var(--text-dim); padding: 20px;">Loading devices...</div>
+                </div>
+            </div>
+
+            <!-- Climate -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">&#x1F321; Climate</span>
+                    <span class="thermostat-status" id="thermostatStatus"></span>
+                </div>
+                <div class="thermostat-zones" id="thermostatZones">
+                    <div class="thermostat-loading">Loading thermostats...</div>
+                </div>
+            </div>
+
+            <!-- Quick Scenes -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">&#x2728; Scenes</span>
+                </div>
+                <div class="scene-grid">
+                    <div class="scene-btn" onclick="activateScene('morning')">
+                        <div class="scene-icon">&#x1F305;</div>
+                        <div class="scene-name">Morning</div>
+                    </div>
+                    <div class="scene-btn" onclick="activateScene('bedtime')">
+                        <div class="scene-icon">&#x1F319;</div>
+                        <div class="scene-name">Bedtime</div>
+                    </div>
+                    <div class="scene-btn" onclick="activateScene('movie')">
+                        <div class="scene-icon">&#x1F3AC;</div>
+                        <div class="scene-name">Movie</div>
+                    </div>
+                    <div class="scene-btn" onclick="activateScene('away')">
+                        <div class="scene-icon">&#x1F3E0;</div>
+                        <div class="scene-name">Away</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipes -->
+            <div class="card recipe-card" onclick="openRecipes()">
+                <div class="card-header">
+                    <span class="card-title">📖 Recipes</span>
+                </div>
+                <div class="recipe-widget">
+                    <div class="recipe-icon">🍳</div>
+                    <div class="recipe-text">Tap to open Tandoor</div>
+                    <div class="recipe-subtext">Manage your recipes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const CONFIG = {
+            SIGNALR_URL: 'https://nexus-alexa-bridge-45799.azurewebsites.net/api',
+            DEMO_MODE: false,
+            // Flight tracker config - Local PiAware
+            PIAWARE_URL: '/api/aircraft',
+            FLIGHT_REFRESH_MS: 5000, // 5 seconds
+            // FlightAware route lookup via Azure proxy
+            FLIGHTAWARE_PROXY_URL: 'https://nexus-alexa-bridge-45799.azurewebsites.net/api/flightaware-proxy',
+            ROUTE_LOOKUP_ENABLED: true,
+            ROUTE_CACHE_HOURS: 4 // Cache routes for 4 hours
+        };
+        
+        // ============================================
+        // AIRCRAFT TYPE DATABASE
+        // ============================================
+        const AIRCRAFT_TYPES = {
+            // Airbus
+            'A318': 'Airbus A318', 'A319': 'Airbus A319', 'A320': 'Airbus A320', 'A321': 'Airbus A321',
+            'A20N': 'Airbus A320neo', 'A21N': 'Airbus A321neo', 'A19N': 'Airbus A319neo',
+            'A332': 'Airbus A330-200', 'A333': 'Airbus A330-300', 'A339': 'Airbus A330-900neo',
+            'A342': 'Airbus A340-200', 'A343': 'Airbus A340-300', 'A345': 'Airbus A340-500', 'A346': 'Airbus A340-600',
+            'A359': 'Airbus A350-900', 'A35K': 'Airbus A350-1000',
+            'A388': 'Airbus A380-800',
+            // Boeing
+            'B712': 'Boeing 717-200',
+            'B731': 'Boeing 737-100', 'B732': 'Boeing 737-200', 'B733': 'Boeing 737-300',
+            'B734': 'Boeing 737-400', 'B735': 'Boeing 737-500', 'B736': 'Boeing 737-600',
+            'B737': 'Boeing 737-700', 'B738': 'Boeing 737-800', 'B739': 'Boeing 737-900',
+            'B37M': 'Boeing 737 MAX 7', 'B38M': 'Boeing 737 MAX 8', 'B39M': 'Boeing 737 MAX 9', 'B3XM': 'Boeing 737 MAX 10',
+            'B741': 'Boeing 747-100', 'B742': 'Boeing 747-200', 'B743': 'Boeing 747-300',
+            'B744': 'Boeing 747-400', 'B748': 'Boeing 747-8', 'B74S': 'Boeing 747SP',
+            'B752': 'Boeing 757-200', 'B753': 'Boeing 757-300',
+            'B762': 'Boeing 767-200', 'B763': 'Boeing 767-300', 'B764': 'Boeing 767-400',
+            'B772': 'Boeing 777-200', 'B77L': 'Boeing 777-200LR', 'B773': 'Boeing 777-300',
+            'B77W': 'Boeing 777-300ER', 'B778': 'Boeing 777-8', 'B779': 'Boeing 777-9',
+            'B788': 'Boeing 787-8', 'B789': 'Boeing 787-9', 'B78X': 'Boeing 787-10',
+            // Embraer
+            'E135': 'Embraer ERJ-135', 'E140': 'Embraer ERJ-140', 'E145': 'Embraer ERJ-145',
+            'E170': 'Embraer E170', 'E175': 'Embraer E175', 'E190': 'Embraer E190', 'E195': 'Embraer E195',
+            'E75L': 'Embraer E175 Long', 'E75S': 'Embraer E175',
+            'E290': 'Embraer E190-E2', 'E295': 'Embraer E195-E2',
+            // Bombardier / Canadair
+            'CRJ1': 'Bombardier CRJ-100', 'CRJ2': 'Bombardier CRJ-200', 'CRJ7': 'Bombardier CRJ-700',
+            'CRJ9': 'Bombardier CRJ-900', 'CRJX': 'Bombardier CRJ-1000',
+            'DH8A': 'Dash 8-100', 'DH8B': 'Dash 8-200', 'DH8C': 'Dash 8-300', 'DH8D': 'Dash 8-400',
+            'BCS1': 'Airbus A220-100', 'BCS3': 'Airbus A220-300', 'A220': 'Airbus A220',
+            // ATR
+            'AT43': 'ATR 42-300', 'AT45': 'ATR 42-500', 'AT46': 'ATR 42-600',
+            'AT72': 'ATR 72-200', 'AT75': 'ATR 72-500', 'AT76': 'ATR 72-600',
+            // McDonnell Douglas
+            'MD11': 'McDonnell Douglas MD-11', 'MD80': 'McDonnell Douglas MD-80',
+            'MD81': 'MD-81', 'MD82': 'MD-82', 'MD83': 'MD-83', 'MD87': 'MD-87', 'MD88': 'MD-88', 'MD90': 'MD-90',
+            'DC10': 'McDonnell Douglas DC-10',
+            // Business Jets
+            'C25A': 'Cessna Citation CJ2', 'C25B': 'Cessna Citation CJ3', 'C25C': 'Cessna Citation CJ4',
+            'C500': 'Cessna Citation I', 'C510': 'Cessna Citation Mustang', 'C525': 'Cessna CitationJet',
+            'C550': 'Cessna Citation II', 'C560': 'Cessna Citation V', 'C56X': 'Cessna Citation Excel',
+            'C680': 'Cessna Citation Sovereign', 'C700': 'Cessna Citation Longitude', 'C750': 'Cessna Citation X',
+            'CL30': 'Bombardier Challenger 300', 'CL35': 'Bombardier Challenger 350',
+            'CL60': 'Bombardier Challenger 600', 'CL64': 'Bombardier Challenger 604', 'CL65': 'Bombardier Challenger 650',
+            'GL5T': 'Bombardier Global 5000', 'GL7T': 'Bombardier Global 7500', 'GLEX': 'Bombardier Global Express',
+            'G150': 'Gulfstream G150', 'G200': 'Gulfstream G200', 'G280': 'Gulfstream G280',
+            'GLF4': 'Gulfstream G-IV', 'GLF5': 'Gulfstream G-V', 'GLF6': 'Gulfstream G650',
+            'G550': 'Gulfstream G550', 'G650': 'Gulfstream G650',
+            'LJ35': 'Learjet 35', 'LJ45': 'Learjet 45', 'LJ60': 'Learjet 60', 'LJ75': 'Learjet 75',
+            'E50P': 'Embraer Phenom 100', 'E55P': 'Embraer Phenom 300',
+            'E545': 'Embraer Legacy 450', 'E550': 'Embraer Legacy 500', 'E35L': 'Embraer Legacy 600',
+            'FA50': 'Dassault Falcon 50', 'FA7X': 'Dassault Falcon 7X', 'F900': 'Dassault Falcon 900',
+            'F2TH': 'Dassault Falcon 2000', 'FA8X': 'Dassault Falcon 8X',
+            'PC12': 'Pilatus PC-12', 'PC24': 'Pilatus PC-24',
+            'PRM1': 'Beechcraft Premier I', 'BE40': 'Beechcraft Beechjet 400',
+            'H25B': 'Hawker 800', 'H25C': 'Hawker 1000',
+            // Cargo
+            'A306': 'Airbus A300-600F', 'B763F': 'Boeing 767-300F',
+            // Military / Special
+            'C130': 'Lockheed C-130 Hercules', 'C17': 'Boeing C-17 Globemaster',
+            'KC10': 'McDonnell Douglas KC-10', 'KC35': 'Boeing KC-135 Stratotanker',
+            'E3CF': 'Boeing E-3 Sentry (AWACS)', 'P8': 'Boeing P-8 Poseidon',
+            // Small Aircraft
+            'C172': 'Cessna 172 Skyhawk', 'C182': 'Cessna 182 Skylane', 'C208': 'Cessna 208 Caravan',
+            'PA28': 'Piper Cherokee', 'PA32': 'Piper Saratoga', 'PA46': 'Piper Malibu',
+            'BE36': 'Beechcraft Bonanza', 'BE58': 'Beechcraft Baron', 'BE9L': 'Beechcraft King Air 90',
+            'BE20': 'Beechcraft King Air 200', 'BE30': 'Beechcraft King Air 300', 'BE35': 'Beechcraft Bonanza',
+            'SR20': 'Cirrus SR20', 'SR22': 'Cirrus SR22', 'SF50': 'Cirrus Vision Jet',
+            'DA40': 'Diamond DA40', 'DA42': 'Diamond DA42', 'DA62': 'Diamond DA62',
+            // Helicopters
+            'R22': 'Robinson R22', 'R44': 'Robinson R44', 'R66': 'Robinson R66',
+            'EC35': 'Airbus EC135', 'EC45': 'Airbus EC145', 'EC55': 'Airbus EC155',
+            'A139': 'Leonardo AW139', 'A169': 'Leonardo AW169', 'A189': 'Leonardo AW189',
+            'S76': 'Sikorsky S-76', 'S92': 'Sikorsky S-92',
+            'B06': 'Bell 206', 'B407': 'Bell 407', 'B412': 'Bell 412', 'B429': 'Bell 429'
+        };
+        
+        function getAircraftTypeName(code) {
+            if (!code) return null;
+            return AIRCRAFT_TYPES[code.toUpperCase()] || code;
+        }
+
+        // ============================================
+        // CLOCK
+        // ============================================
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ============================================
+        // KIOSK MODE
+        // ============================================
+        let kioskMode = false;
+        let cursorTimeout = null;
+        let tapCount = 0;
+        let tapTimeout = null;
+        
+        function toggleKiosk() {
+            if (kioskMode) {
+                exitKiosk();
+            } else {
+                enterKiosk();
+            }
+        }
+        
+        function enterKiosk() {
+            kioskMode = true;
+            document.body.classList.add('kiosk-mode');
+            document.getElementById('kioskBtn').classList.add('active');
+            
+            // Try to go fullscreen
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {});
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            }
+            
+            // Hide cursor after 3 seconds of inactivity
+            startCursorHideTimer();
+            
+            // Save state
+            localStorage.setItem('kioskMode', 'true');
+        }
+        
+        function exitKiosk() {
+            kioskMode = false;
+            document.body.classList.remove('kiosk-mode', 'show-cursor');
+            document.getElementById('kioskBtn').classList.remove('active');
+            document.getElementById('kioskExitHint').style.display = 'none';
+            
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            
+            if (cursorTimeout) clearTimeout(cursorTimeout);
+            localStorage.removeItem('kioskMode');
+        }
+        
+        // Settings Modal Functions
+        let shellyDevices = [];
+        let honeywellDevices = [];
+        
+        async function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+            showSettingsTab('shelly');
+            await loadAllDevices();
+            await loadCredentialStatus();
+            loadSystemInfo();
+            resetUpdateUI(); // Reset any previous update state
+        }
+        
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+            resetUpdateUI(); // Clear update state when closing
+        }
+        
+        function showSettingsTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`.settings-tab[onclick*="${tabName}"]`).classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.settings-tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        
+        async function loadCredentialStatus() {
+            try {
+                const response = await fetch('/api/settings/credentials/status');
+                const status = await response.json();
+                
+                // Honeywell credentials
+                if (status.honeywell) {
+                    if (status.honeywell.email) {
+                        document.getElementById('honeywellEmail').value = status.honeywell.email;
+                    }
+                    if (status.honeywell.configured) {
+                        document.getElementById('honeywellPassword').placeholder = '••••••••  (configured)';
+                    }
+                }
+                
+                // Load Ring settings and devices
+                await loadRingSettings();
+                
+                // Check Ring connection status (this will show/hide appropriate UI)
+                checkRingStatus();
+            } catch (err) {
+                console.error('Failed to load credential status:', err);
+            }
+        }
+        
+        async function loadAllDevices() {
+            try {
+                const response = await fetch('/api/devices');
+                const data = await response.json();
+                const devices = data.devices || [];
+                
+                shellyDevices = devices.filter(d => d.type === 'shelly');
+                honeywellDevices = devices.filter(d => d.type === 'honeywell' || d.type === 'thermostat');
+                
+                renderShellyDevices();
+                renderHoneywellDevices();
+            } catch (err) {
+                console.error('Failed to load devices:', err);
+            }
+        }
+        
+        function renderShellyDevices() {
+            const container = document.getElementById('shellyDeviceList');
+            if (shellyDevices.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim); margin-bottom: 15px;">No Shelly devices configured. Click discover to find devices.</p>';
+                return;
+            }
+            container.innerHTML = shellyDevices.map((device, index) => `
+                <div class="device-item">
+                    <div class="device-item-info">
+                        <input type="text" class="device-item-name" id="shelly-name-${index}" value="${device.name || ''}" placeholder="Device name" style="background: transparent; border: none; color: var(--text-bright); font-weight: 500; width: 100%;">
+                        <div class="device-item-detail">${device.ip} • ${device.online ? '🟢 Online' : '🔴 Offline'}</div>
+                    </div>
+                    <div class="device-item-actions">
+                        <button class="device-item-btn remove" onclick="removeDevice('shelly', '${device.id}')">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderHoneywellDevices() {
+            const container = document.getElementById('honeywellDeviceList');
+            if (honeywellDevices.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim); margin-bottom: 15px;">No thermostats configured. Enter credentials above and click discover.</p>';
+                return;
+            }
+            container.innerHTML = honeywellDevices.map((device, index) => `
+                <div class="device-item">
+                    <div class="device-item-info">
+                        <input type="text" class="device-item-name" id="honeywell-name-${index}" value="${device.name || ''}" placeholder="Device name" style="background: transparent; border: none; color: var(--text-bright); font-weight: 500; width: 100%;">
+                        <div class="device-item-detail">ID: ${device.id}</div>
+                    </div>
+                    <div class="device-item-actions">
+                        <button class="device-item-btn remove" onclick="removeDevice('honeywell', '${device.id}')">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function discoverDevices(type) {
+            const btn = document.getElementById(`discover${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Discovering...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/discover/${type}`);
+                const devices = await response.json();
+                
+                if (devices.length > 0) {
+                    showStatus(`Found ${devices.length} ${type} device(s)!`, 'success');
+                    await loadAllDevices();
+                } else {
+                    showStatus(`No ${type} devices found.`, 'info');
+                }
+            } catch (err) {
+                console.error('Discovery failed:', err);
+                showStatus(`Discovery failed: ${err.message}`, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        async function saveHoneywellCredentials() {
+            const email = document.getElementById('honeywellEmail').value;
+            const password = document.getElementById('honeywellPassword').value;
+            const placeholder = document.getElementById('honeywellPassword').placeholder;
+            const alreadyConfigured = placeholder.includes('configured');
+            
+            if (!email) {
+                showStatus('Please enter email', 'error');
+                return;
+            }
+            
+            // If password is empty but already configured, only update email
+            if (!password && !alreadyConfigured) {
+                showStatus('Please enter password', 'error');
+                return;
+            }
+            
+            const payload = { honeywellEmail: email };
+            if (password) {
+                payload.honeywellPassword = password;
+            }
+            
+            try {
+                const response = await fetch('/api/credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    showStatus('Credentials saved! You can now discover thermostats.', 'success');
+                    document.getElementById('honeywellPassword').placeholder = '••••••••  (configured)';
+                } else {
+                    showStatus('Failed to save credentials', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+        
+        // Ring Authentication Methods
+        function showRingMethod(method) {
+            const loginBtn = document.getElementById('ringMethodLogin');
+            const tokenBtn = document.getElementById('ringMethodToken');
+            const loginDiv = document.getElementById('ringLoginMethod');
+            const tokenDiv = document.getElementById('ringTokenMethod');
+            
+            if (method === 'login') {
+                loginBtn.style.opacity = '1';
+                tokenBtn.style.opacity = '0.6';
+                loginDiv.style.display = 'block';
+                tokenDiv.style.display = 'none';
+            } else {
+                loginBtn.style.opacity = '0.6';
+                tokenBtn.style.opacity = '1';
+                loginDiv.style.display = 'none';
+                tokenDiv.style.display = 'block';
+            }
+        }
+        
+        async function saveRingToken() {
+            const token = document.getElementById('ringToken').value.trim();
+            
+            if (!token) {
+                showStatus('Please enter the refresh token', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ringToken: token })
+                });
+                
+                if (response.ok) {
+                    showStatus('Ring token saved! Checking connection...', 'success');
+                    document.getElementById('ringToken').value = '';
+                    
+                    // Hide both methods, show connected
+                    document.getElementById('ringLoginMethod').style.display = 'none';
+                    document.getElementById('ringTokenMethod').style.display = 'none';
+                    document.getElementById('ringAuthConnected').style.display = 'block';
+                    
+                    // Check status and discover devices
+                    checkRingStatus();
+                    discoverRingDevices();
+                } else {
+                    showStatus('Failed to save token', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+        
+        // Ring Login Flow
+        async function ringRequestAuth() {
+            const email = document.getElementById('ringEmail').value;
+            const password = document.getElementById('ringPassword').value;
+            
+            if (!email || !password) {
+                showStatus('Please enter email and password', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('ringAuthBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Sending 2FA code...';
+            
+            try {
+                const response = await fetch('/api/ring/auth/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('2FA code sent! Check your phone or email.', 'success');
+                    document.getElementById('ringAuthStep1').style.display = 'none';
+                    document.getElementById('ringAuthStep2').style.display = 'block';
+                    document.getElementById('ring2FACode').focus();
+                } else {
+                    showStatus(data.error || 'Authentication failed', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🔐 Connect to Ring';
+            }
+        }
+        
+        async function ringVerifyAuth() {
+            const code = document.getElementById('ring2FACode').value;
+            
+            if (!code) {
+                showStatus('Please enter the 2FA code', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('ringVerifyBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Verifying...';
+            
+            try {
+                const response = await fetch('/api/ring/auth/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('Ring connected successfully!', 'success');
+                    document.getElementById('ringAuthStep2').style.display = 'none';
+                    document.getElementById('ringAuthConnected').style.display = 'block';
+                    // Clear sensitive data
+                    document.getElementById('ringEmail').value = '';
+                    document.getElementById('ringPassword').value = '';
+                    document.getElementById('ring2FACode').value = '';
+                    // Refresh status and discover devices
+                    checkRingStatus();
+                    discoverRingDevices();
+                } else {
+                    showStatus(data.error || 'Verification failed', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✓ Verify Code';
+            }
+        }
+        
+        function ringCancelAuth() {
+            document.getElementById('ringAuthStep1').style.display = 'block';
+            document.getElementById('ringAuthStep2').style.display = 'none';
+            document.getElementById('ring2FACode').value = '';
+        }
+        
+        async function ringDisconnect() {
+            if (!confirm('Disconnect Ring? You will need to reconnect using your Ring credentials.')) {
+                return;
+            }
+            
+            try {
+                await fetch('/api/credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ringToken: '' })
+                });
+                
+                showStatus('Ring disconnected', 'info');
+                // Show method buttons and login method
+                document.getElementById('ringMethodLogin').parentElement.style.display = 'flex';
+                document.getElementById('ringLoginMethod').style.display = 'block';
+                document.getElementById('ringTokenMethod').style.display = 'none';
+                document.getElementById('ringAuthStep1').style.display = 'block';
+                document.getElementById('ringAuthConnected').style.display = 'none';
+                // Reset button states
+                showRingMethod('login');
+                checkRingStatus();
+                ringDevices = [];
+                renderRingDevices();
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+        
+        async function checkRingStatus() {
+            const statusEl = document.getElementById('ringStatus');
+            statusEl.innerHTML = '<span style="color: var(--text-dim);">Checking...</span>';
+            
+            try {
+                const response = await fetch('/api/ring/snapshot');
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusEl.innerHTML = '<span style="color: var(--accent-green);">✓ Connected</span>';
+                    // Show connected UI, hide auth methods
+                    document.getElementById('ringLoginMethod').style.display = 'none';
+                    document.getElementById('ringTokenMethod').style.display = 'none';
+                    document.getElementById('ringAuthConnected').style.display = 'block';
+                    // Hide method buttons when connected
+                    document.getElementById('ringMethodLogin').parentElement.style.display = 'none';
+                } else if (data.error === 'Ring not configured') {
+                    statusEl.innerHTML = '<span style="color: var(--text-dim);">Not configured - use login or token above</span>';
+                    // Show auth methods
+                    document.getElementById('ringMethodLogin').parentElement.style.display = 'flex';
+                    document.getElementById('ringLoginMethod').style.display = 'block';
+                    document.getElementById('ringTokenMethod').style.display = 'none';
+                    document.getElementById('ringAuthConnected').style.display = 'none';
+                    document.getElementById('ringAuthStep1').style.display = 'block';
+                    document.getElementById('ringAuthStep2').style.display = 'none';
+                } else {
+                    statusEl.innerHTML = `<span style="color: var(--accent-red);">✗ ${data.error}</span>`;
+                }
+            } catch (err) {
+                statusEl.innerHTML = `<span style="color: var(--accent-red);">✗ Connection error</span>`;
+            }
+        }
+        
+        let ringDevices = [];
+        
+        async function loadRingSettings() {
+            try {
+                const response = await fetch('/api/ring/settings');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Set snapshot interval dropdown
+                    const select = document.getElementById('ringSnapshotInterval');
+                    if (select && data.snapshotInterval) {
+                        select.value = data.snapshotInterval;
+                    }
+                    
+                    // Render devices
+                    ringDevices = data.devices || [];
+                    renderRingDevices();
+                }
+            } catch (err) {
+                console.error('Failed to load Ring settings:', err);
+            }
+        }
+        
+        function renderRingDevices() {
+            const container = document.getElementById('ringDeviceList');
+            if (!container) return;
+            
+            if (ringDevices.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim); margin-bottom: 15px;">No Ring devices configured. Add token and click discover.</p>';
+                return;
+            }
+            
+            container.innerHTML = ringDevices.map((device, index) => `
+                <div class="device-item">
+                    <div class="device-item-info">
+                        <div class="device-item-name">${device.type === 'doorbell' ? '🚪' : '📷'} ${device.name}</div>
+                        <div class="device-item-detail">${device.type}${device.batteryLevel ? ' • 🔋 ' + device.batteryLevel + '%' : ''}</div>
+                    </div>
+                    <div class="device-item-actions">
+                        <button class="device-item-btn remove" onclick="removeDevice('ring', '${device.id}')">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function discoverRingDevices() {
+            const btn = document.getElementById('discoverRingBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Discovering...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/ring/devices');
+                const data = await response.json();
+                
+                if (data.success && data.devices && data.devices.length > 0) {
+                    // Save to config via discover endpoint
+                    const saveResponse = await fetch('/api/discover/ring');
+                    const saved = await saveResponse.json();
+                    
+                    showStatus(`Found ${data.devices.length} Ring device(s)!`, 'success');
+                    await loadRingSettings();
+                    checkRingStatus();
+                } else if (data.error) {
+                    showStatus(`Discovery failed: ${data.error}`, 'error');
+                } else {
+                    showStatus('No Ring devices found', 'info');
+                }
+            } catch (err) {
+                console.error('Ring discovery failed:', err);
+                showStatus(`Discovery failed: ${err.message}`, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        async function saveRingSettings() {
+            const snapshotInterval = document.getElementById('ringSnapshotInterval').value;
+            
+            try {
+                const response = await fetch('/api/ring/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ snapshotInterval: parseInt(snapshotInterval) })
+                });
+                
+                if (response.ok) {
+                    showStatus('Snapshot interval updated', 'success');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+        
+        async function removeDevice(type, deviceId) {
+            if (!confirm(`Remove this ${type} device?`)) return;
+            
+            try {
+                const response = await fetch(`/api/devices/${type}/${deviceId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    await loadAllDevices();
+                    showStatus('Device removed', 'success');
+                } else {
+                    showStatus('Failed to remove device', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+        
+        async function saveAllSettings() {
+            // Collect Shelly name changes
+            const shellyUpdates = shellyDevices.map((device, index) => ({
+                ...device,
+                name: document.getElementById(`shelly-name-${index}`)?.value || device.name
+            }));
+            
+            // Collect Honeywell name changes
+            const honeywellUpdates = honeywellDevices.map((device, index) => ({
+                ...device,
+                name: document.getElementById(`honeywell-name-${index}`)?.value || device.name
+            }));
+            
+            try {
+                const response = await fetch('/api/devices/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shelly: shellyUpdates, honeywell: honeywellUpdates })
+                });
+                
+                if (response.ok) {
+                    showStatus('Settings saved!', 'success');
+                    setTimeout(() => {
+                        closeSettings();
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showStatus('Failed to save settings', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            // Remove existing status
+            const existing = document.querySelector('.settings-status');
+            if (existing) existing.remove();
+            
+            const status = document.createElement('div');
+            status.className = `settings-status ${type}`;
+            status.textContent = message;
+            
+            const content = document.querySelector('.settings-content');
+            content.insertBefore(status, content.querySelector('.settings-tabs').nextSibling);
+            
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => status.remove(), 3000);
+            }
+        }
+        
+        function clearFlightCache() {
+            localStorage.removeItem('flightRouteCache');
+            showStatus('Flight route cache cleared!', 'success');
+        }
+        
+        // Close modal on background click
+        document.getElementById('settingsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'settingsModal') closeSettings();
+        });
+        
+        function startCursorHideTimer() {
+            if (cursorTimeout) clearTimeout(cursorTimeout);
+            document.body.classList.add('show-cursor');
+            cursorTimeout = setTimeout(() => {
+                if (kioskMode) {
+                    document.body.classList.remove('show-cursor');
+                }
+            }, 3000);
+        }
+        
+        // Show cursor on mouse move
+        document.addEventListener('mousemove', () => {
+            if (kioskMode) startCursorHideTimer();
+        });
+        
+        // Triple-tap to show exit menu
+        document.addEventListener('click', (e) => {
+            if (!kioskMode) return;
+            
+            tapCount++;
+            if (tapTimeout) clearTimeout(tapTimeout);
+            
+            tapTimeout = setTimeout(() => {
+                tapCount = 0;
+            }, 500);
+            
+            if (tapCount >= 3) {
+                tapCount = 0;
+                document.getElementById('kioskExitHint').style.display = 'block';
+                startCursorHideTimer();
+            }
+        });
+        
+        // Hide exit hint when clicking outside
+        document.getElementById('kioskExitHint').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('kioskExitHint')) {
+                document.getElementById('kioskExitHint').style.display = 'none';
+            }
+        });
+        
+        // Prevent context menu in kiosk mode
+        document.addEventListener('contextmenu', (e) => {
+            if (kioskMode) e.preventDefault();
+        });
+        
+        // Restore kiosk mode on page load
+        if (localStorage.getItem('kioskMode') === 'true') {
+            setTimeout(enterKiosk, 500);
+        }
+        
+        // Handle fullscreen exit
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && kioskMode) {
+                // User pressed Escape - stay in kiosk but show exit hint
+                document.getElementById('kioskExitHint').style.display = 'block';
+            }
+        });
+
+        // ============================================
+        // DYNAMIC DEVICES
+        // ============================================
+        const DEVICES_API = '/api/devices';
+        const DEVICES_REFRESH_MS = 5000;
+        
+        let devicesState = {};
+        
+        async function fetchDevices() {
+            const statusEl = document.getElementById('devicesStatus');
+            const gridEl = document.getElementById('devicesGrid');
+            
+            try {
+                const response = await fetch(DEVICES_API);
+                const data = await response.json();
+                
+                if (data.success && data.devices) {
+                    // Filter to only Shelly devices for the devices card
+                    const shellyDevices = data.devices.filter(d => d.type === 'shelly');
+                    devicesState = {};
+                    shellyDevices.forEach(d => devicesState[d.id] = d);
+                    renderDevices(shellyDevices);
+                    statusEl.textContent = 'Live';
+                    statusEl.style.color = 'var(--accent-green)';
+                }
+            } catch (err) {
+                console.error('Devices error:', err);
+                statusEl.textContent = 'Offline';
+                statusEl.style.color = 'var(--accent-red)';
+            }
+        }
+        
+        function renderDevices(devices) {
+            const gridEl = document.getElementById('devicesGrid');
+            if (!gridEl) return;
+            
+            let html = '';
+            devices.forEach(device => {
+                const isOn = device.state;
+                const activeClass = isOn ? 'active' : '';
+                const power = device.power > 0 ? device.power.toFixed(1) + 'W' : '';
+                html += '<div class="kitchen-btn ' + activeClass + '" id="btn-' + device.id + '" onclick="toggleDevice(\'' + device.id + '\')">' +
+                    '<div class="kitchen-icon">' + device.icon + '</div>' +
+                    '<div class="kitchen-name">' + device.name + '</div>' +
+                    '<div class="kitchen-power">' + power + '</div></div>';
+            });
+            
+            if (devices.length > 1) {
+                const anyOn = devices.some(d => d.state);
+                html += '<div class="kitchen-btn kitchen-all ' + (anyOn ? 'active' : '') + '" onclick="toggleAllDevices()">' +
+                    '<div class="kitchen-icon">💡</div><div class="kitchen-name">All</div></div>';
+            }
+            gridEl.innerHTML = html;
+        }
+        
+        async function toggleDevice(deviceId) {
+            const btn = document.getElementById('btn-' + deviceId);
+            const device = devicesState[deviceId];
+            if (!device) return;
+            const newState = !device.state;
+            btn.classList.add('loading');
+            try {
+                const resp = await fetch(DEVICES_API + '/' + deviceId + '/control', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({state: newState})
+                });
+                if ((await resp.json()).success) {
+                    device.state = newState;
+                    btn.classList.toggle('active', newState);
+                }
+            } catch (err) { console.error(err); }
+            btn.classList.remove('loading');
+        }
+        
+        async function toggleAllDevices() {
+            const devices = Object.values(devicesState);
+            const newState = !devices.some(d => d.state);
+            document.querySelectorAll('.kitchen-btn').forEach(b => b.classList.add('loading'));
+            try {
+                await Promise.all(devices.map(d => 
+                    fetch(DEVICES_API + '/' + d.id + '/control', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({state: newState})
+                    })
+                ));
+                devices.forEach(d => d.state = newState);
+                renderDevices(devices);
+            } catch (err) { console.error(err); }
+            document.querySelectorAll('.kitchen-btn').forEach(b => b.classList.remove('loading'));
+        }
+
+        async function activateScene(scene) {
+            const btn = event.target.closest('.scene-btn');
+            btn.style.opacity = '0.5';
+            const newState = scene === 'morning';
+            const devices = Object.values(devicesState);
+            await Promise.all(devices.map(d => 
+                fetch(DEVICES_API + '/' + d.id + '/control', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({state: newState})
+                })
+            ));
+            await fetchDevices();
+            btn.style.opacity = '1';
+        }
+
+        // ============================================
+        // CONNECTION STATUS
+
+        // ============================================
+        function updateConnectionStatus(connected) {
+            const badge = document.getElementById('connectionStatus');
+            const text = document.getElementById('statusText');
+            const feedStatus = document.getElementById('feedStatus');
+            if (connected) {
+                badge.className = 'status-badge connected';
+                text.textContent = 'Connected';
+                feedStatus.className = 'online-badge';
+                feedStatus.innerHTML = '&#x25CF; LIVE';
+            } else {
+                badge.className = 'status-badge disconnected';
+                text.textContent = 'Disconnected';
+                feedStatus.className = 'offline-badge';
+                feedStatus.innerHTML = '&#x25CF; OFFLINE';
+            }
+        }
+
+        // ============================================
+        // ALEXA FEED
+        // ============================================
+        function addFeedItem(event) {
+            const feed = document.getElementById('alexaFeed');
+            const icons = { 'music': '&#x1F3B5;', 'smart-home': '&#x1F4A1;', 'recipe': '&#x1F373;', 'weather': '&#x2600;&#xFE0F;', 'timer': '&#x23F0;', 'general': '&#x1F3A4;' };
+            const item = document.createElement('div');
+            item.className = 'feed-item ' + (event.type || 'general');
+            item.innerHTML = `
+                <div class="feed-icon">${icons[event.type] || '&#x1F3A4;'}</div>
+                <div class="feed-content">
+                    <div class="feed-device">${event.device || 'Echo Device'}</div>
+                    <div class="feed-utterance">"${event.utterance || event.message || 'Unknown'}"</div>
+                    <div class="feed-response">${event.response || ''}</div>
+                    <div class="feed-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+            while (feed.children.length > 15) feed.removeChild(feed.lastChild);
+        }
+
+        // ============================================
+        // SIGNALR CONNECTION
+        // ============================================
+        function connectSignalR() {
+            if (CONFIG.DEMO_MODE) {
+                updateConnectionStatus(true);
+                return;
+            }
+            try {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(CONFIG.SIGNALR_URL, { withCredentials: false })
+                    .withAutomaticReconnect()
+                    .build();
+                connection.on('alexaEvent', (event) => { addFeedItem(event); });
+                connection.onreconnecting(() => updateConnectionStatus(false));
+                connection.onreconnected(() => updateConnectionStatus(true));
+                connection.onclose(() => { updateConnectionStatus(false); setTimeout(connectSignalR, 5000); });
+                connection.start()
+                    .then(() => updateConnectionStatus(true))
+                    .catch(err => { console.error('SignalR error:', err); updateConnectionStatus(false); setTimeout(connectSignalR, 5000); });
+            } catch (err) {
+                console.error('SignalR setup error:', err);
+                updateConnectionStatus(false);
+            }
+        }
+
+        // ============================================
+        // FLIGHTAWARE ROUTE LOOKUP
+        // ============================================
+        const routeCache = loadRouteCache();
+        const routeLookupQueue = [];
+        let routeLookupInProgress = false;
+        
+        function loadRouteCache() {
+            try {
+                const cached = localStorage.getItem('flightRouteCache');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    // Clean expired entries
+                    const now = Date.now();
+                    const maxAge = CONFIG.ROUTE_CACHE_HOURS * 60 * 60 * 1000;
+                    Object.keys(data).forEach(key => {
+                        if (now - data[key].timestamp > maxAge) {
+                            delete data[key];
+                        }
+                    });
+                    return data;
+                }
+            } catch (e) {}
+            return {};
+        }
+        
+        function saveRouteCache() {
+            try {
+                localStorage.setItem('flightRouteCache', JSON.stringify(routeCache));
+            } catch (e) {}
+        }
+        
+        function getRouteFromCache(callsign) {
+            const entry = routeCache[callsign];
+            if (entry) {
+                const age = Date.now() - entry.timestamp;
+                if (age < CONFIG.ROUTE_CACHE_HOURS * 60 * 60 * 1000) {
+                    return entry.route;
+                }
+            }
+            return null;
+        }
+        
+        function queueRouteLookup(callsign) {
+            if (!CONFIG.ROUTE_LOOKUP_ENABLED) return;
+            if (!callsign || callsign === 'Unknown') return;
+            if (getRouteFromCache(callsign)) return;
+            if (routeCache[callsign] && routeCache[callsign].notFound) return; // Already tried, not found
+            if (routeLookupQueue.includes(callsign)) return;
+            
+            routeLookupQueue.push(callsign);
+            processRouteLookupQueue();
+        }
+        
+        async function processRouteLookupQueue() {
+            if (routeLookupInProgress || routeLookupQueue.length === 0) return;
+            if (!CONFIG.ROUTE_LOOKUP_ENABLED) return;
+            
+            routeLookupInProgress = true;
+            updateRouteStatus();
+            const callsign = routeLookupQueue.shift();
+            
+            try {
+                const response = await fetch(`${CONFIG.FLIGHTAWARE_PROXY_URL}?callsign=${encodeURIComponent(callsign)}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.found && data.origin && data.destination) {
+                        const route = `${data.origin.code} → ${data.destination.code}`;
+                        
+                        routeCache[callsign] = {
+                            route: route,
+                            origin: data.origin,
+                            destination: data.destination,
+                            aircraft: data.aircraftType,
+                            registration: data.registration,
+                            timestamp: Date.now()
+                        };
+                        saveRouteCache();
+                        console.log(`Route found: ${callsign} = ${route} (${data.aircraftType || 'unknown type'})`);
+                    } else {
+                        // Mark as not found so we don't keep trying
+                        routeCache[callsign] = { notFound: true, timestamp: Date.now() };
+                        saveRouteCache();
+                    }
+                } else if (response.status === 429) {
+                    // Rate limited - put back in queue and wait longer
+                    routeLookupQueue.unshift(callsign);
+                    console.warn('FlightAware rate limited, waiting...');
+                    setTimeout(() => {
+                        routeLookupInProgress = false;
+                        updateRouteStatus();
+                        processRouteLookupQueue();
+                    }, 10000); // Wait 10 seconds
+                    return;
+                }
+            } catch (error) {
+                console.error('Route lookup error:', error);
+            }
+            
+            // Wait 2 seconds between lookups to conserve API credits
+            setTimeout(() => {
+                routeLookupInProgress = false;
+                updateRouteStatus();
+                processRouteLookupQueue();
+            }, 2000);
+        }
+        
+        function updateRouteStatus() {
+            const statusEl = document.getElementById('routeStatus');
+            if (!statusEl) return;
+            
+            if (routeLookupQueue.length > 0 || routeLookupInProgress) {
+                statusEl.style.display = 'inline';
+                statusEl.innerHTML = `&#x1F50D; ${routeLookupQueue.length + (routeLookupInProgress ? 1 : 0)} pending`;
+            } else {
+                statusEl.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // FLIGHT TRACKER (PiAware Local Data)
+        // ============================================
+        const HOME_LAT = 35.7915;
+        const HOME_LON = -78.7811;
+        const OVERHEAD_RADIUS_MILES = 1.5; // Highlight if within this radius
+        
+        // Calculate distance between two points in miles (Haversine formula)
+        function getDistanceMiles(lat1, lon1, lat2, lon2) {
+            const R = 3958.8; // Earth radius in miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        async function fetchFlights() {
+            const container = document.getElementById('flightContainer');
+            const countEl = document.getElementById('flightCount');
+            
+            try {
+                const response = await fetch(CONFIG.PIAWARE_URL);
+                const data = await response.json();
+                
+                // Filter aircraft with position data
+                const validAircraft = (data.aircraft || []).filter(ac => 
+                    ac.lat && ac.lon && ac.seen < 60
+                );
+                
+                if (validAircraft.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-flights">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">&#x2708;&#xFE0F;</div>
+                            No aircraft detected
+                            <div style="font-size: 0.8rem; margin-top: 5px; color: var(--text-dim);">Your receiver is listening...</div>
+                        </div>
+                    `;
+                    countEl.textContent = '0 aircraft';
+                    return;
+                }
+                
+                // Sort: overhead first, then by altitude (lowest first - more interesting)
+                const flights = validAircraft.sort((a, b) => {
+                    const aOverhead = getDistanceMiles(HOME_LAT, HOME_LON, a.lat, a.lon) <= OVERHEAD_RADIUS_MILES;
+                    const bOverhead = getDistanceMiles(HOME_LAT, HOME_LON, b.lat, b.lon) <= OVERHEAD_RADIUS_MILES;
+                    if (aOverhead && !bOverhead) return -1;
+                    if (!aOverhead && bOverhead) return 1;
+                    return (a.alt_baro || 99999) - (b.alt_baro || 99999);
+                });
+                
+                countEl.textContent = `${flights.length} aircraft`;
+                
+                container.innerHTML = flights.slice(0, 12).map(ac => {
+                    const callsign = (ac.flight || ac.hex || 'Unknown').trim();
+                    const hex = ac.hex ? ac.hex.toUpperCase() : '';
+                    const altitude = ac.alt_baro || ac.alt_geom || null;
+                    const speed = ac.gs ? Math.round(ac.gs) : null; // Ground speed in knots
+                    const heading = ac.track || ac.nav_heading || 0;
+                    const vertRate = ac.baro_rate || ac.geom_rate || 0;
+                    const squawk = ac.squawk || '';
+                    const category = ac.category || '';
+                    const distance = ac.r_dst ? ac.r_dst.toFixed(1) : null;
+                    const rssi = ac.rssi ? ac.rssi.toFixed(1) : null;
+                    
+                    // Check if overhead
+                    const distFromHome = getDistanceMiles(HOME_LAT, HOME_LON, ac.lat, ac.lon);
+                    const isOverhead = distFromHome <= OVERHEAD_RADIUS_MILES;
+                    const overheadClass = isOverhead ? 'overhead' : '';
+                    const overheadBadge = isOverhead ? '<span class="overhead-badge">✈️ OVERHEAD</span>' : '';
+                    
+                    // Determine direction arrow and cardinal direction
+                    const directions = ['&#x2191;', '&#x2197;', '&#x2192;', '&#x2198;', '&#x2193;', '&#x2199;', '&#x2190;', '&#x2196;'];
+                    const cardinals = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                    const dirIndex = Math.round(heading / 45) % 8;
+                    const dirArrow = directions[dirIndex];
+                    const cardinal = cardinals[dirIndex];
+                    
+                    // Vertical status
+                    let vertStatus = '';
+                    let vertIcon = '';
+                    if (vertRate > 200) { vertStatus = 'Climbing'; vertIcon = '&#x2197;'; }
+                    else if (vertRate < -200) { vertStatus = 'Descending'; vertIcon = '&#x2198;'; }
+                    else { vertStatus = 'Level'; vertIcon = '&#x2192;'; }
+                    
+                    // Altitude color
+                    let altColor = 'var(--accent-green)';
+                    if (altitude > 30000) altColor = 'var(--accent-cyan)';
+                    else if (altitude > 15000) altColor = 'var(--accent-yellow)';
+                    else if (altitude > 5000) altColor = 'var(--accent-orange)';
+                    else if (altitude) altColor = 'var(--accent-red)';
+                    
+                    // Aircraft type from category
+                    const categoryMap = {
+                        'A1': 'Light', 'A2': 'Small', 'A3': 'Large', 'A4': 'High Vortex',
+                        'A5': 'Heavy', 'A6': 'High Perf', 'A7': 'Rotorcraft',
+                        'B1': 'Glider', 'B2': 'Balloon', 'B4': 'Skydiver', 'B6': 'UAV',
+                        'C1': 'Emergency', 'C3': 'Ground Obstruction'
+                    };
+                    const acType = categoryMap[category] || '';
+                    
+                    // Airline identification
+                    const airlineMap = {
+                        'AAL': 'American', 'DAL': 'Delta', 'UAL': 'United', 'SWA': 'Southwest',
+                        'JBU': 'JetBlue', 'ASA': 'Alaska', 'FFT': 'Frontier', 'NKS': 'Spirit',
+                        'RPA': 'Republic', 'SKW': 'SkyWest', 'ENY': 'Envoy', 'PDT': 'Piedmont',
+                        'FDX': 'FedEx', 'UPS': 'UPS', 'GTI': 'Atlas Air', 'EJA': 'NetJets',
+                        'LXJ': 'Flexjet', 'XOJ': 'XOJET', 'AWI': 'Air Wisconsin'
+                    };
+                    const prefix = callsign.substring(0, 3);
+                    const airline = airlineMap[prefix] || '';
+                    
+                    // Emergency squawks
+                    let emergencyBadge = '';
+                    if (squawk === '7500') emergencyBadge = '<span style="background: var(--accent-red); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">HIJACK</span>';
+                    else if (squawk === '7600') emergencyBadge = '<span style="background: var(--accent-orange); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">RADIO FAIL</span>';
+                    else if (squawk === '7700') emergencyBadge = '<span style="background: var(--accent-red); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">EMERGENCY</span>';
+                    
+                    // Route info from FlightAware cache
+                    const cachedData = routeCache[callsign];
+                    let routeDisplay = `<span style="color: var(--text-dim);">Heading ${cardinal}</span>`;
+                    let aircraftType = acType;
+                    let aircraftTypeDisplay = '';
+                    
+                    if (cachedData && cachedData.route) {
+                        routeDisplay = `<span style="color: var(--accent-green);">${cachedData.route}</span>`;
+                        if (cachedData.aircraft) {
+                            aircraftType = getAircraftTypeName(cachedData.aircraft);
+                        }
+                    } else {
+                        // Queue for lookup
+                        queueRouteLookup(callsign);
+                    }
+                    
+                    // Format aircraft type display
+                    if (aircraftType) {
+                        aircraftTypeDisplay = `<span style="color: var(--accent-cyan); font-size: 0.75rem; margin-left: 5px;">${aircraftType}</span>`;
+                    }
+                    
+                    return `
+                        <div class="flight-item ${overheadClass}">
+                            <div class="flight-icon" style="color: ${altColor}">&#x2708;&#xFE0F;</div>
+                            <div class="flight-info">
+                                <div class="flight-callsign">
+                                    ${callsign} 
+                                    ${airline ? '<span style="color: var(--accent-purple); font-size: 0.8rem;">(' + airline + ')</span>' : ''}
+                                    ${aircraftTypeDisplay}
+                                    ${emergencyBadge}
+                                    ${overheadBadge}
+                                </div>
+                                <div class="flight-route">
+                                    ${routeDisplay}
+                                    ${distance ? ' &bull; ' + distance + ' nm away' : ''}
+                                </div>
+                                <div class="flight-details">
+                                    <div class="flight-detail">Speed: <span>${speed ? speed + ' kts' : 'N/A'}</span></div>
+                                    <div class="flight-detail">${dirArrow} ${Math.round(heading)}°</div>
+                                    <div class="flight-detail">${vertIcon} ${vertStatus}</div>
+                                    ${squawk && !emergencyBadge ? '<div class="flight-detail">Squawk: <span>' + squawk + '</span></div>' : ''}
+                                </div>
+                            </div>
+                            <div class="flight-altitude">
+                                <div class="flight-alt-value" style="color: ${altColor}">${altitude ? altitude.toLocaleString() : 'GND'}</div>
+                                <div class="flight-alt-label">${altitude ? 'feet' : ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Flight fetch error:', error);
+                container.innerHTML = `
+                    <div class="no-flights">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">&#x26A0;&#xFE0F;</div>
+                        Cannot reach PiAware
+                        <div style="font-size: 0.8rem; margin-top: 5px; color: var(--text-dim);">Check: ${CONFIG.PIAWARE_URL}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
+        // WEATHER (National Weather Service)
+        // ============================================
+        const WEATHER_LAT = 35.7915;
+        const WEATHER_LON = -78.7811;
+        const WEATHER_REFRESH_MS = 600000; // 10 minutes
+        let weatherGridUrl = null;
+        let weatherForecastUrl = null;
+        let weatherStationId = null;
+        
+        async function initWeather() {
+            try {
+                // Get grid point info for this location
+                const pointsResponse = await fetch(`https://api.weather.gov/points/${WEATHER_LAT},${WEATHER_LON}`, {
+                    headers: { 'User-Agent': 'NEXUS Dashboard' }
+                });
+                const pointsData = await pointsResponse.json();
+                
+                weatherGridUrl = pointsData.properties.forecastHourly;
+                weatherForecastUrl = pointsData.properties.forecast;
+                
+                // Get observation station
+                const stationsResponse = await fetch(pointsData.properties.observationStations, {
+                    headers: { 'User-Agent': 'NEXUS Dashboard' }
+                });
+                const stationsData = await stationsResponse.json();
+                weatherStationId = stationsData.features[0].properties.stationIdentifier;
+                
+                // Fetch initial weather
+                await fetchWeather();
+            } catch (err) {
+                console.error('Weather init error:', err);
+                document.getElementById('weatherCondition').textContent = 'Unable to load';
+            }
+        }
+        
+        async function fetchWeather() {
+            const statusEl = document.getElementById('weatherStatus');
+            
+            try {
+                let currentTemp = null;
+                let humidity = null;
+                let windSpeed = null;
+                let feelsLike = null;
+                let condition = null;
+                
+                // Get current observations
+                if (weatherStationId) {
+                    const obsResponse = await fetch(`https://api.weather.gov/stations/${weatherStationId}/observations/latest`, {
+                        headers: { 'User-Agent': 'NEXUS Dashboard' }
+                    });
+                    const obsData = await obsResponse.json();
+                    const obs = obsData.properties;
+                    
+                    if (obs.temperature && obs.temperature.value !== null) {
+                        currentTemp = Math.round(obs.temperature.value * 9/5 + 32);
+                    }
+                    if (obs.relativeHumidity && obs.relativeHumidity.value !== null) {
+                        humidity = Math.round(obs.relativeHumidity.value);
+                    }
+                    if (obs.windSpeed && obs.windSpeed.value !== null) {
+                        windSpeed = Math.round(obs.windSpeed.value * 0.621371);
+                    } else if (obs.windGust && obs.windGust.value !== null) {
+                        // Fallback to gust if speed not available
+                        windSpeed = Math.round(obs.windGust.value * 0.621371);
+                    }
+                    if (obs.windChill && obs.windChill.value !== null) {
+                        feelsLike = Math.round(obs.windChill.value * 9/5 + 32);
+                    } else if (obs.heatIndex && obs.heatIndex.value !== null) {
+                        feelsLike = Math.round(obs.heatIndex.value * 9/5 + 32);
+                    } else {
+                        feelsLike = currentTemp;
+                    }
+                }
+                
+                // Get forecast for condition and forecast display
+                if (weatherForecastUrl) {
+                    const forecastResponse = await fetch(weatherForecastUrl, {
+                        headers: { 'User-Agent': 'NEXUS Dashboard' }
+                    });
+                    const forecastData = await forecastResponse.json();
+                    const periods = forecastData.properties.periods;
+                    
+                    // Get current condition from first period
+                    if (periods.length > 0) {
+                        condition = periods[0].shortForecast;
+                        // If we didn't get temp from observation, use forecast
+                        if (currentTemp === null) {
+                            currentTemp = periods[0].temperature;
+                        }
+                    }
+                    
+                    // Build 4-day forecast with highs and lows
+                    const dailyData = {};
+                    for (const period of periods.slice(0, 10)) {
+                        const date = new Date(period.startTime);
+                        const dayKey = date.toLocaleDateString('en-US', { weekday: 'short' });
+                        
+                        if (!dailyData[dayKey]) {
+                            dailyData[dayKey] = { day: dayKey, icon: period.shortForecast, high: null, low: null };
+                        }
+                        
+                        if (period.isDaytime) {
+                            dailyData[dayKey].high = period.temperature;
+                            dailyData[dayKey].icon = period.shortForecast;
+                        } else {
+                            dailyData[dayKey].low = period.temperature;
+                        }
+                    }
+                    
+                    const forecasts = Object.values(dailyData).slice(0, 4);
+                    const forecastEl = document.getElementById('weatherForecast');
+                    forecastEl.innerHTML = forecasts.map(f => `
+                        <div class="forecast-item">
+                            <div class="forecast-day">${f.day}</div>
+                            <div class="forecast-icon">${getWeatherIcon(f.icon || '')}</div>
+                            <div class="forecast-temps">
+                                <span class="forecast-high">${f.high || '--'}°</span>
+                                <span class="forecast-low">${f.low !== null ? ' / ' + f.low + '°' : ''}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                // Update UI
+                document.getElementById('weatherTemp').textContent = `${currentTemp || '--'}°`;
+                document.getElementById('weatherCondition').textContent = condition || 'Clear';
+                document.getElementById('weatherHumidity').textContent = `${humidity || '--'}%`;
+                document.getElementById('weatherWind').textContent = `${windSpeed || '--'} mph`;
+                document.getElementById('weatherFeelsLike').textContent = `${feelsLike || '--'}°`;
+                document.getElementById('weatherIconLarge').textContent = getWeatherIcon(condition || 'clear');
+                
+                statusEl.textContent = 'NWS';
+                statusEl.style.color = 'var(--accent-green)';
+                
+            } catch (err) {
+                console.error('Weather fetch error:', err);
+                statusEl.textContent = 'Error';
+                statusEl.style.color = 'var(--accent-red)';
+            }
+        }
+        
+        function getWeatherIcon(condition) {
+            const c = condition.toLowerCase();
+            if (c.includes('thunder') || c.includes('storm')) return '⛈️';
+            if (c.includes('rain') && c.includes('snow')) return '🌨️';
+            if (c.includes('sleet') || c.includes('ice')) return '🌨️';
+            if (c.includes('rain') || c.includes('shower') || c.includes('drizzle')) return '🌧️';
+            if (c.includes('snow') || c.includes('flurr')) return '❄️';
+            if (c.includes('fog') || c.includes('mist')) return '🌫️';
+            if (c.includes('haze') || c.includes('smoke')) return '🌫️';
+            if (c.includes('partly cloudy') || c.includes('partly sunny')) return '⛅';
+            if (c.includes('mostly cloudy')) return '🌥️';
+            if (c.includes('cloud') || c.includes('overcast')) return '☁️';
+            if (c.includes('sunny') || c.includes('clear')) return '☀️';
+            if (c.includes('fair')) return '🌤️';
+            if (c.includes('wind')) return '💨';
+            if (c.includes('hot')) return '🔥';
+            if (c.includes('cold')) return '🥶';
+            return '☀️';
+        }
+
+        // ============================================
+        // THERMOSTAT
+        // ============================================
+        const THERMOSTAT_API = '/api/thermostat';
+        const THERMOSTAT_REFRESH_MS = 60000; // Refresh every minute
+        
+        let lastThermostatData = null; // Cache last successful data
+        
+        function renderThermostats(thermostats, statusEl, container) {
+            const outdoor = thermostats[0]; // Get outdoor data from first thermostat
+            
+            let html = thermostats.map(t => {
+                const isHeating = t.status === 'Heating';
+                const isCooling = t.status === 'Cooling';
+                const zoneClass = isHeating ? 'heating' : (isCooling ? 'cooling' : '');
+                const modeClass = t.mode ? t.mode.toLowerCase() : 'off';
+                const statusClass = t.status ? t.status.toLowerCase() : '';
+                
+                const currentTemp = t.currentTemp != null ? Math.round(t.currentTemp) : '--';
+                const targetTemp = t.targetTemp != null ? Math.round(t.targetTemp) : '--';
+                const humidity = t.humidity != null ? t.humidity : '--';
+                const mode = t.mode || 'Off';
+                const status = t.status || 'Idle';
+                
+                return `
+                    <div class="thermostat-zone ${zoneClass}">
+                        <div class="zone-temps">
+                            <div class="zone-current">${currentTemp}°</div>
+                            <div class="zone-target">Set: ${targetTemp}°</div>
+                        </div>
+                        <div class="zone-info">
+                            <div class="zone-name">${t.name}</div>
+                            <div class="zone-details">
+                                <span>💧 ${humidity}%</span>
+                                <span class="zone-mode ${modeClass}">${mode}</span>
+                                ${status !== 'Idle' ? `<span class="zone-mode ${statusClass}">${status}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add outdoor info
+            if (outdoor && outdoor.outdoorTemp) {
+                html += `
+                    <div class="thermostat-outdoor">
+                        <span>Outside: <span>${Math.round(outdoor.outdoorTemp)}°F</span></span>
+                        <span>Humidity: <span>${outdoor.outdoorHumidity}%</span></span>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        async function fetchThermostats(retryCount = 0) {
+            const container = document.getElementById('thermostatZones');
+            const statusEl = document.getElementById('thermostatStatus');
+            
+            try {
+                const response = await fetch(THERMOSTAT_API);
+                const data = await response.json();
+                
+                // Check if data is incomplete (cold start issue)
+                if (!data.success || !data.thermostats || data.thermostats.length === 0) {
+                    if (retryCount < 2) {
+                        statusEl.textContent = 'Warming up...';
+                        setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                        return;
+                    }
+                    // Use cached data if available
+                    if (lastThermostatData) {
+                        renderThermostats(lastThermostatData, statusEl, container);
+                        statusEl.textContent = 'Cached';
+                        statusEl.style.color = 'var(--accent-yellow)';
+                    } else {
+                        container.innerHTML = '<div class="thermostat-loading">Unable to load thermostats</div>';
+                    }
+                    return;
+                }
+                
+                // Check if we got actual data (not nulls from cold start)
+                const hasValidData = data.thermostats.some(t => t.currentTemp != null);
+                if (!hasValidData) {
+                    if (retryCount < 2) {
+                        statusEl.textContent = 'Warming up...';
+                        setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                        return;
+                    }
+                    // Use cached data if available
+                    if (lastThermostatData) {
+                        renderThermostats(lastThermostatData, statusEl, container);
+                        statusEl.textContent = 'Cached';
+                        statusEl.style.color = 'var(--accent-yellow)';
+                        return;
+                    }
+                }
+                
+                // Cache and render successful data
+                lastThermostatData = data.thermostats;
+                renderThermostats(data.thermostats, statusEl, container);
+                statusEl.textContent = data.cached ? 'Cached' : (data.stale ? 'Stale' : 'Live');
+                statusEl.style.color = data.cached || data.stale ? 'var(--accent-yellow)' : 'var(--accent-green)';
+                
+            } catch (err) {
+                console.error('Thermostat error:', err);
+                if (retryCount < 2) {
+                    statusEl.textContent = 'Retrying...';
+                    setTimeout(() => fetchThermostats(retryCount + 1), 3000);
+                    return;
+                }
+                // Always try to render cached data on error
+                if (lastThermostatData) {
+                    renderThermostats(lastThermostatData, statusEl, container);
+                    statusEl.textContent = 'Offline (cached)';
+                    statusEl.style.color = 'var(--accent-yellow)';
+                } else {
+                    container.innerHTML = '<div class="thermostat-loading">Error loading thermostats</div>';
+                    statusEl.textContent = 'Offline';
+                    statusEl.style.color = 'var(--accent-red)';
+                }
+            }
+        }
+
+        // ============================================
+        // RECIPES
+        // ============================================
+        const TANDOOR_URL = 'http://178.156.143.114';
+        
+        function openRecipes() {
+            window.open(TANDOOR_URL, '_blank');
+        }
+
+        // ============================================
+        // WAKE LOCK
+        // ============================================
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {}
+        }
+
+        // ============================================
+        // RING DOORBELL CAMERA
+        // ============================================
+        const RING_API = '/api/ring/snapshot';
+        const RING_REFRESH_MS = 30000; // Refresh every 30 seconds
+        
+        async function fetchRingSnapshot() {
+            const statusEl = document.getElementById('ringStatus');
+            const snapshotEl = document.getElementById('ringSnapshot');
+            const placeholderEl = document.getElementById('ringPlaceholder');
+            const batteryEl = document.getElementById('ringBattery');
+            const wifiEl = document.getElementById('ringWifi');
+            const lastUpdateEl = document.getElementById('ringLastUpdate');
+            
+            try {
+                statusEl.textContent = 'Loading...';
+                
+                // Add timeout to fetch
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 35000);
+                
+                const response = await fetch(RING_API, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                const data = await response.json();
+                
+                if (data.success && data.snapshot) {
+                    // Show snapshot
+                    snapshotEl.src = `data:image/jpeg;base64,${data.snapshot}`;
+                    snapshotEl.style.display = 'block';
+                    placeholderEl.style.display = 'none';
+                    
+                    // Update info
+                    if (data.battery !== undefined && data.battery !== null) {
+                        batteryEl.textContent = `${data.battery}%`;
+                    } else {
+                        batteryEl.textContent = '--';
+                    }
+                    if (data.wifi !== undefined && data.wifi !== null) {
+                        wifiEl.textContent = data.wifi;
+                    } else {
+                        wifiEl.textContent = '--';
+                    }
+                    
+                    const now = new Date();
+                    lastUpdateEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    
+                    statusEl.textContent = data.stale ? 'Cached' : 'Live';
+                    statusEl.classList.toggle('live', !data.stale);
+                } else {
+                    // Show error but keep any existing snapshot
+                    statusEl.textContent = data.error || 'Unavailable';
+                    statusEl.classList.remove('live');
+                    
+                    // Update placeholder text if no snapshot yet
+                    if (snapshotEl.style.display === 'none') {
+                        const loadingText = placeholderEl.querySelector('div');
+                        if (loadingText) {
+                            loadingText.textContent = data.error || 'Camera unavailable';
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Ring error:', err);
+                if (err.name === 'AbortError') {
+                    statusEl.textContent = 'Timeout';
+                } else {
+                    statusEl.textContent = 'Offline';
+                }
+                statusEl.classList.remove('live');
+            }
+        }
+
+        // ============================================
+        // SYSTEM ADMIN
+        // ============================================
+        
+        // Drag and drop support
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadArea = document.getElementById('uploadArea');
+            if (uploadArea) {
+                ['dragenter', 'dragover'].forEach(e => {
+                    uploadArea.addEventListener(e, (evt) => {
+                        evt.preventDefault();
+                        uploadArea.classList.add('drag-over');
+                    });
+                });
+                ['dragleave', 'drop'].forEach(e => {
+                    uploadArea.addEventListener(e, (evt) => {
+                        evt.preventDefault();
+                        uploadArea.classList.remove('drag-over');
+                    });
+                });
+                uploadArea.addEventListener('drop', (evt) => {
+                    const file = evt.dataTransfer.files[0];
+                    if (file && file.name.endsWith('.zip')) {
+                        handleUpdateFile(file);
+                    } else {
+                        showStatus('Please upload a .zip file', 'error');
+                    }
+                });
+            }
+        });
+        
+        function handleUpdateUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleUpdateFile(file);
+            }
+        }
+        
+        async function handleUpdateFile(file) {
+            const progressEl = document.getElementById('updateProgress');
+            const statusTextEl = document.getElementById('updateStatusText');
+            const resultEl = document.getElementById('updateResult');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            // Show progress
+            uploadArea.style.display = 'none';
+            progressEl.style.display = 'block';
+            resultEl.style.display = 'none';
+            statusTextEl.textContent = `Checking system...`;
+            
+            try {
+                // First check if multer is available
+                let useBootstrap = false;
+                try {
+                    const statusResp = await fetch('/api/system/update/status');
+                    const status = await statusResp.json();
+                    useBootstrap = status.needsBootstrap;
+                } catch (e) {
+                    // If status check fails, try bootstrap mode
+                    useBootstrap = true;
+                }
+                
+                let data;
+                
+                if (useBootstrap) {
+                    // Bootstrap mode: convert file to base64 and send as JSON
+                    statusTextEl.textContent = `Preparing ${file.name} for bootstrap...`;
+                    
+                    const base64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    
+                    statusTextEl.textContent = `Uploading ${file.name} (bootstrap mode)...`;
+                    
+                    const response = await fetch('/api/system/bootstrap', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ zipData: base64, filename: file.name })
+                    });
+                    
+                    data = await response.json();
+                } else {
+                    // Normal mode: use multer upload
+                    statusTextEl.textContent = `Uploading ${file.name}...`;
+                    
+                    const formData = new FormData();
+                    formData.append('update', file);
+                    
+                    const response = await fetch('/api/system/update', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    data = await response.json();
+                }
+                
+                progressEl.style.display = 'none';
+                resultEl.style.display = 'block';
+                
+                if (data.success) {
+                    if (data.rebuilding || data.restarting) {
+                        // Server is rebuilding/restarting - show waiting message and auto-refresh
+                        const title = data.rebuilding ? '🔨 Rebuilding System...' : '🔄 Restarting...';
+                        resultEl.innerHTML = `
+                            <div style="color: var(--accent-cyan); margin-bottom: 10px;">${title}</div>
+                            <div class="update-log">${data.log || 'Update in progress'}</div>
+                            <div style="margin-top: 15px; text-align: center;">
+                                <div class="spinner" style="margin: 15px auto;"></div>
+                                <div style="color: var(--text-dim);">Page will refresh automatically in <span id="refreshCountdown">15</span> seconds...</div>
+                            </div>
+                        `;
+                        
+                        // Countdown and refresh (shorter for restart since build is done)
+                        let countdown = data.restarting ? 15 : 30;
+                        const interval = setInterval(() => {
+                            countdown--;
+                            const el = document.getElementById('refreshCountdown');
+                            if (el) el.textContent = countdown;
+                            if (countdown <= 0) {
+                                clearInterval(interval);
+                                location.reload();
+                            }
+                        }, 1000);
+                        
+                    } else {
+                        const manualNote = data.needsManualRestart ? `
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(255,200,0,0.1); border-radius: 8px; border: 1px solid rgba(255,200,0,0.3);">
+                                <div style="color: var(--accent-yellow); margin-bottom: 5px;">⚠️ Manual restart required:</div>
+                                <code style="font-size: 0.85rem;">cd /opt/nexus && sudo docker compose build api && sudo docker compose up -d</code>
+                            </div>
+                        ` : '';
+                        
+                        resultEl.innerHTML = `
+                            <div style="color: var(--accent-green); margin-bottom: 10px;">✓ Update applied successfully!</div>
+                            <div class="update-log">${data.log || 'Update complete'}</div>
+                            ${manualNote}
+                            <div style="margin-top: 15px;">
+                                <button class="settings-btn" onclick="location.reload()">Refresh Dashboard</button>
+                            </div>
+                        `;
+                    }
+                } else {
+                    resultEl.innerHTML = `
+                        <div style="color: var(--accent-red); margin-bottom: 10px;">✗ Update failed</div>
+                        <div class="update-log">${data.error || 'Unknown error'}\n\n${data.log || ''}</div>
+                        <div style="margin-top: 15px;">
+                            <button class="settings-btn" onclick="resetUpdateUI()">Try Again</button>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                progressEl.style.display = 'none';
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = `
+                    <div style="color: var(--accent-red); margin-bottom: 10px;">✗ Upload failed</div>
+                    <div class="update-log">${err.message}</div>
+                    <div style="margin-top: 15px;">
+                        <button class="settings-btn" onclick="resetUpdateUI()">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function resetUpdateUI() {
+            const uploadArea = document.getElementById('uploadArea');
+            const progress = document.getElementById('updateProgress');
+            const result = document.getElementById('updateResult');
+            const zipInput = document.getElementById('updateZip');
+            
+            if (uploadArea) uploadArea.style.display = 'block';
+            if (progress) progress.style.display = 'none';
+            if (result) result.style.display = 'none';
+            if (zipInput) zipInput.value = '';
+        }
+        
+        async function loadSystemInfo() {
+            const infoEl = document.getElementById('systemInfo');
+            if (!infoEl) return;
+            
+            try {
+                const response = await fetch('/api/system/info');
+                const data = await response.json();
+                
+                if (data.success) {
+                    infoEl.innerHTML = `
+                        <div style="display: grid; gap: 8px;">
+                            <div><strong>Version:</strong> ${data.version || 'Unknown'}</div>
+                            <div><strong>Uptime:</strong> ${data.uptime || 'Unknown'}</div>
+                            <div><strong>Memory:</strong> ${data.memory || 'Unknown'}</div>
+                            <div><strong>Devices:</strong> ${data.deviceCount || 0} configured</div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                infoEl.textContent = 'Unable to load system info';
+            }
+        }
+        
+        async function clearFlightCache() {
+            try {
+                const response = await fetch('/api/flights/cache', { method: 'DELETE' });
+                if (response.ok) {
+                    showStatus('Flight cache cleared', 'success');
+                }
+            } catch (err) {
+                showStatus('Failed to clear cache', 'error');
+            }
+        }
+        
+        async function restartApi() {
+            if (!confirm('Restart the API server? The dashboard will briefly disconnect.')) return;
+            
+            showStatus('Restarting API...', 'info');
+            try {
+                await fetch('/api/system/restart', { method: 'POST' });
+                // Wait a moment then reload
+                setTimeout(() => location.reload(), 3000);
+            } catch (err) {
+                // Expected - server is restarting
+                setTimeout(() => location.reload(), 3000);
+            }
+        }
+        
+        async function resetSystem() {
+            const confirm1 = prompt('This will delete all device configurations. Type "RESET" to confirm:');
+            if (confirm1 !== 'RESET') return;
+            
+            try {
+                const response = await fetch('/api/settings/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ confirm: 'RESET' })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showStatus('System reset complete', 'success');
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showStatus(data.error || 'Reset failed', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            connectSignalR();
+            requestWakeLock();
+            
+            // Start flight tracker
+            fetchFlights();
+            setInterval(fetchFlights, CONFIG.FLIGHT_REFRESH_MS);
+            
+            // Start thermostat updates
+            fetchThermostats();
+            setInterval(fetchThermostats, THERMOSTAT_REFRESH_MS);
+            
+            // Start weather updates
+            initWeather();
+            setInterval(fetchWeather, WEATHER_REFRESH_MS);
+            
+            // Start Shelly light status polling
+            fetchDevices();
+            setInterval(fetchDevices, DEVICES_REFRESH_MS);
+            
+            // Start Ring camera polling
+            fetchRingSnapshot();
+            setInterval(fetchRingSnapshot, RING_REFRESH_MS);
+        });
+    </script>
+</body>
+</html>
