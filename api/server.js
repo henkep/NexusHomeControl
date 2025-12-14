@@ -484,7 +484,7 @@ app.get('/api/shelly/status', async (req, res) => {
     try {
         const results = await Promise.all(devices.map(async device => {
             try {
-                const url = device.gen === 2 
+                const url = device.gen >= 2 
                     ? `http://${device.ip}/rpc/Switch.GetStatus?id=0`
                     : `http://${device.ip}/relay/0`;
                     
@@ -493,7 +493,7 @@ app.get('/api/shelly/status', async (req, res) => {
                 
                 return {
                     ...device,
-                    on: device.gen === 2 ? data.output : data.ison,
+                    on: device.gen >= 2 ? data.output : data.ison,
                     power: data.apower || data.power || 0,
                     online: true
                 };
@@ -517,7 +517,7 @@ app.post('/api/shelly/control', async (req, res) => {
     }
     
     try {
-        const url = shelly.gen === 2
+        const url = shelly.gen >= 2
             ? `http://${shelly.ip}/rpc/Switch.Set?id=0&on=${state}`
             : `http://${shelly.ip}/relay/0?turn=${state ? 'on' : 'off'}`;
             
@@ -534,7 +534,7 @@ app.post('/api/shelly/all', async (req, res) => {
     
     try {
         await Promise.all(devices.map(device => {
-            const url = device.gen === 2
+            const url = device.gen >= 2
                 ? `http://${device.ip}/rpc/Switch.Set?id=0&on=${state}`
                 : `http://${device.ip}/relay/0?turn=${state ? 'on' : 'off'}`;
             return fetch(url).catch(() => {});
@@ -558,7 +558,7 @@ app.post('/api/shelly/room/:room', async (req, res) => {
     
     try {
         await Promise.all(devices.map(device => {
-            const url = device.gen === 2
+            const url = device.gen >= 2
                 ? `http://${device.ip}/rpc/Switch.Set?id=0&on=${state}`
                 : `http://${device.ip}/relay/0?turn=${state ? 'on' : 'off'}`;
             return fetch(url).catch(() => {});
@@ -1286,7 +1286,7 @@ app.post('/api/scene/:name', async (req, res) => {
         if (scene.shelly !== undefined) {
             const devices = config.shelly || [];
             await Promise.all(devices.map(device => {
-                const url = device.gen === 2
+                const url = device.gen >= 2
                     ? `http://${device.ip}/rpc/Switch.Set?id=0&on=${scene.shelly}`
                     : `http://${device.ip}/relay/0?turn=${scene.shelly ? 'on' : 'off'}`;
                 return fetch(url).catch(() => {});

@@ -35,20 +35,23 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 **Cause:** Geolocation API requires HTTPS; no geocoding API for manual entry  
 **Fix:** Add Nominatim or similar geocoding API for address lookup
 
-### 4. Discovered Shelly devices not saved to config
+### 4. Discovered Shelly devices not saved to config (FIXED)
 **Symptom:** Discovery finds 3 devices, config shows empty array  
 **Cause:** Discovery results not persisted to config.json  
-**Fix:** Save discovered devices in `/api/discover` endpoint
+**Fix:** Save discovered devices in `/api/discover/:type` endpoint
+**Status:** Fixed - auto-saves to config on discovery
 
-### 5. Shelly discovery false positives
+### 5. Shelly discovery false positives (FIXED)
 **Symptom:** Detects HP printers and other devices as Shellys  
 **Cause:** Loose check for "type" in response instead of JSON parsing  
-**Fix:** Check for `"type":"SH` prefix or `"gen":` field for Gen2/3
+**Fix:** Check for specific Shelly API endpoints (`/rpc/Shelly.GetDeviceInfo` for Gen2, `/shelly` for Gen1)
+**Status:** Fixed - only real Shelly devices detected
 
-### 6. Shelly discovery misses Gen2/Gen3 devices
+### 6. Shelly discovery misses Gen2/Gen3 devices (FIXED)
 **Symptom:** Gen3 Shelly 1PM devices not found  
 **Cause:** Code checks for `"type":"SH...` which only exists in Gen1  
-**Fix:** Also check for `"gen":2` or `"gen":3` with `"model":` field
+**Fix:** Check Gen2/Gen3 RPC API first, then Gen1 API
+**Status:** Fixed - Gen2 and Gen3 devices now discovered
 
 ### 7. PiAware auto-discovery fails
 **Symptom:** PiAware on same Pi not detected  
@@ -69,11 +72,11 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 
 ## API Issues
 
-### 10. Gen3 Shelly control fails
+### 10. Gen3 Shelly control fails (FIXED)
 **Symptom:** Gen3 devices use wrong API endpoint  
 **Cause:** Code checks `gen === 2` instead of `gen >= 2`  
-**Fix:** Change condition to `gen >= 2` for RPC API
-**Location:** `/opt/nexus/api/server.js` lines ~307, 340, 357, etc.
+**Fix:** Changed all conditions to `gen >= 2` for RPC API
+**Status:** Fixed - Gen2 and Gen3 use same RPC API
 
 ### 11. Dashboard/API endpoint mismatch (FIXED)
 **Symptom:** Dashboard Shelly status shows "Offline"  
@@ -121,10 +124,11 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 
 ## Configuration Issues
 
-### 17. docker-compose.yml version obsolete
+### 17. docker-compose.yml version obsolete (FIXED)
 **Symptom:** Warning on every docker compose command  
 **Cause:** `version: '3.8'` is deprecated  
 **Fix:** Remove the `version:` line from docker-compose.yml
+**Status:** Fixed - version line removed
 
 ### 18. Ring auth CLI package changed
 **Symptom:** Documentation shows wrong npm package  
