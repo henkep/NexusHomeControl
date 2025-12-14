@@ -22,11 +22,12 @@ set -e
 # ============================================
 # CONFIGURATION
 # ============================================
-NEXUS_VERSION="2.6.1"
+NEXUS_VERSION="2.6.2"
 NEXUS_DIR="/opt/nexus"
 NEXUS_REPO="https://github.com/henkep/NexusHomeControl.git"
 PIAWARE_INSTALL=true
 CLOUDFLARE_INSTALL=false
+AUTO_YES=false
 
 # Colors
 RED='\033[0;31m'
@@ -157,8 +158,12 @@ install_prerequisites() {
         lsb-release \
         jq \
         unzip \
-        apt-transport-https \
-        software-properties-common
+        apt-transport-https
+    
+    # software-properties-common not available on Trixie
+    if [ "$IS_TRIXIE" != true ]; then
+        apt-get install -y -qq software-properties-common 2>/dev/null || true
+    fi
     
     log_success "Prerequisites installed"
 }
@@ -247,69 +252,101 @@ install_piaware() {
         tclx \
         tcl-tls \
         itcl3 \
-        net-tools
+        net-tools || log_warn "Some PiAware dependencies failed to install"
     
-    # Add FlightAware repository
+    # For Trixie or if repo method fails, use manual package install
+    if [ "$IS_TRIXIE" = true ]; then
+        log_info "Using manual package installation for Trixie..."
+        install_piaware_manual
+        return $?
+    fi
+    
+    # Try adding FlightAware repository
     log_info "Adding FlightAware repository..."
-    curl -fsSL https://www.flightaware.com/adsb/piaware/files/packages.flightaware.com.gpg.key | gpg --dearmor -o /etc/apt/keyrings/flightaware.gpg
     
-    echo "deb [signed-by=/etc/apt/keyrings/flightaware.gpg] https://www.flightaware.com/adsb/piaware/files/packages bullseye piaware" > /etc/apt/sources.list.d/flightaware.list
+    # Try multiple GPG key URLs
+    GPG_URLS=(
+        "https://flightaware.com/adsb/piaware/files/packages.flightaware.com.gpg.key"
+        "https://www.flightaware.com/adsb/piaware/files/packages.flightaware.com.gpg.key"
+        "https://piaware.flightcdn.com/packages.flightaware.com.gpg.key"
+    )
+    
+    GPG_SUCCESS=false
+    for url in "${GPG_URLS[@]}"; do
+        if curl -fsSL "$url" 2>/dev/null | gpg --dearmor -o /etc/apt/keyrings/flightaware.gpg 2>/dev/null; then
+            GPG_SUCCESS=true
+            log_success "GPG key downloaded from $url"
+            break
+        fi
+    done
+    
+    if [ "$GPG_SUCCESS" != true ]; then
+        log_warn "Could not download FlightAware GPG key - using manual install"
+        install_piaware_manual
+        return $?
+    fi
+    
+    echo "deb [signed-by=/etc/apt/keyrings/flightaware.gpg] https://flightaware.com/adsb/piaware/files/packages bullseye piaware" > /etc/apt/sources.list.d/flightaware.list
     
     # Try to update - this is where Trixie fails (Bug #1)
     log_info "Updating package lists..."
     if ! apt-get update 2>/tmp/apt-error.log; then
         if grep -q "flightaware" /tmp/apt-error.log; then
-            log_warn "FlightAware repo incompatible with $DISTRO_VERSION"
-            log_info "Applying Trixie compatibility fix..."
-            
-            # Remove the problematic repo
+            log_warn "FlightAware repo incompatible - using manual install"
             rm -f /etc/apt/sources.list.d/flightaware.list
             apt-get update -qq
-            
-            # Download and install packages manually
-            log_info "Installing PiAware packages manually..."
-            
-            PIAWARE_PKG_URL="https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware-support"
-            TEMP_DIR=$(mktemp -d)
-            cd "$TEMP_DIR"
-            
-            # Download packages for ARM64/ARM
-            if [ "$ARCH" = "arm64" ]; then
-                # For Pi 5 (arm64)
-                wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/d/dump1090-fa/dump1090-fa_9.0_arm64.deb" || true
-                wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware/piaware_9.0.1_arm64.deb" || true
-            else
-                # For Pi 4 and older (armhf)
-                wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/d/dump1090-fa/dump1090-fa_9.0_armhf.deb" || true
-                wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware/piaware_9.0.1_armhf.deb" || true
-            fi
-            
-            # Install downloaded packages
-            if ls *.deb 1>/dev/null 2>&1; then
-                dpkg -i *.deb 2>/dev/null || apt-get install -f -y -qq
-                log_success "PiAware packages installed manually"
-            else
-                log_warn "Could not download PiAware packages - skipping"
-                log_info "You can install PiAware manually later"
-                cd /
-                rm -rf "$TEMP_DIR"
-                return 0
-            fi
-            
-            cd /
-            rm -rf "$TEMP_DIR"
-        else
-            log_error "apt update failed for unknown reason"
-            cat /tmp/apt-error.log
-            return 1
+            install_piaware_manual
+            return $?
         fi
-    else
-        # Normal installation (non-Trixie)
-        apt-get install -y -qq piaware dump1090-fa
     fi
     
-    configure_piaware
-    log_success "PiAware installed"
+    # Normal installation
+    if apt-get install -y -qq piaware dump1090-fa 2>/dev/null; then
+        configure_piaware
+        log_success "PiAware installed from repository"
+    else
+        log_warn "Repository install failed - using manual install"
+        install_piaware_manual
+    fi
+}
+
+install_piaware_manual() {
+    log_info "Installing PiAware packages manually..."
+    
+    TEMP_DIR=$(mktemp -d)
+    cd "$TEMP_DIR"
+    
+    # Download packages for ARM64/ARM
+    if [ "$ARCH" = "arm64" ]; then
+        log_info "Downloading arm64 packages..."
+        wget -q "https://flightaware.com/adsb/piaware/files/packages/pool/piaware/d/dump1090-fa/dump1090-fa_9.0_arm64.deb" 2>/dev/null || \
+        wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/d/dump1090-fa/dump1090-fa_9.0_arm64.deb" 2>/dev/null || true
+        
+        wget -q "https://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware/piaware_9.0.1_arm64.deb" 2>/dev/null || \
+        wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware/piaware_9.0.1_arm64.deb" 2>/dev/null || true
+    else
+        log_info "Downloading armhf packages..."
+        wget -q "https://flightaware.com/adsb/piaware/files/packages/pool/piaware/d/dump1090-fa/dump1090-fa_9.0_armhf.deb" 2>/dev/null || \
+        wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/d/dump1090-fa/dump1090-fa_9.0_armhf.deb" 2>/dev/null || true
+        
+        wget -q "https://flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware/piaware_9.0.1_armhf.deb" 2>/dev/null || \
+        wget -q "https://www.flightaware.com/adsb/piaware/files/packages/pool/piaware/p/piaware/piaware_9.0.1_armhf.deb" 2>/dev/null || true
+    fi
+    
+    # Install downloaded packages
+    if ls *.deb 1>/dev/null 2>&1; then
+        dpkg -i *.deb 2>/dev/null || apt-get install -f -y -qq
+        log_success "PiAware packages installed manually"
+        cd /
+        rm -rf "$TEMP_DIR"
+        configure_piaware
+    else
+        log_warn "Could not download PiAware packages"
+        log_info "You can install PiAware manually later from: https://flightaware.com/adsb/piaware/install"
+        cd /
+        rm -rf "$TEMP_DIR"
+        return 0
+    fi
 }
 
 configure_piaware() {
@@ -542,6 +579,10 @@ parse_args() {
                 CLOUDFLARE_INSTALL=true
                 shift
                 ;;
+            -y|--yes)
+                AUTO_YES=true
+                shift
+                ;;
             --help|-h)
                 echo "NEXUS Home Control Center Installer"
                 echo ""
@@ -550,7 +591,14 @@ parse_args() {
                 echo "Options:"
                 echo "  --no-piaware    Skip PiAware installation"
                 echo "  --cloudflare    Install Cloudflare Tunnel"
+                echo "  -y, --yes       Skip confirmation prompt (for curl | bash)"
                 echo "  --help          Show this help message"
+                echo ""
+                echo "Examples:"
+                echo "  sudo ./install.sh                    # Interactive install"
+                echo "  sudo ./install.sh -y                 # Auto-confirm"
+                echo "  sudo ./install.sh -y --no-piaware    # Auto-confirm, skip PiAware"
+                echo "  curl -sSL <url>/install.sh | sudo bash -s -- -y"
                 echo ""
                 exit 0
                 ;;
@@ -581,11 +629,15 @@ main() {
     fi
     echo ""
     
-    read -p "Continue with installation? (y/n) " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Installation cancelled."
-        exit 0
+    if [ "$AUTO_YES" != true ]; then
+        read -p "Continue with installation? (y/n) " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Installation cancelled."
+            exit 0
+        fi
+    else
+        echo "Auto-confirm enabled (-y flag)"
     fi
     
     check_root
