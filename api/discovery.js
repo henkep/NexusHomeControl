@@ -287,48 +287,87 @@ async function discoverRing(refreshToken) {
 async function discoverPiAware() {
     const networkRange = getLocalNetworkRange();
     const devices = [];
+    const scanPromises = [];
     
     console.log(`Scanning ${networkRange}.1-254 for PiAware/dump1090...`);
     
-    // Check common ports
-    const ports = [8080, 80, 8888];
+    // Check common ports and paths
+    const ports = [8080, 80, 8888, 30003];
+    // Bug #8 fix: Check both skyaware and direct paths
+    const paths = ['/skyaware/data/aircraft.json', '/data/aircraft.json', '/dump1090/data/aircraft.json'];
     
     for (let i = 1; i <= 254; i++) {
         const ip = `${networkRange}.${i}`;
         
-        for (const port of ports) {
-            try {
-                const resp = await fetchWithTimeout(`http://${ip}:${port}/data/aircraft.json`, {}, 500);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.aircraft !== undefined || data.messages !== undefined) {
-                        devices.push({
-                            ip,
-                            port,
-                            type: 'piaware',
-                            url: `http://${ip}:${port}`
-                        });
-                        break; // Found on this IP, skip other ports
+        scanPromises.push(
+            (async () => {
+                for (const port of ports) {
+                    for (const path of paths) {
+                        try {
+                            const resp = await fetchWithTimeout(`http://${ip}:${port}${path}`, {}, 500);
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                if (data.aircraft !== undefined || data.messages !== undefined) {
+                                    return {
+                                        ip,
+                                        port,
+                                        type: 'piaware',
+                                        url: `http://${ip}:${port}`,
+                                        path: path,
+                                        aircraftCount: data.aircraft?.length || 0
+                                    };
+                                }
+                            }
+                        } catch (e) {}
                     }
                 }
-            } catch (e) {}
+                return null;
+            })()
+        );
+    }
+    
+    // Bug #7 fix: Also try to reach host from Docker container
+    // Docker containers can reach host via host.docker.internal or gateway IP
+    const hostIPs = ['host.docker.internal', '172.17.0.1', 'localhost', '127.0.0.1'];
+    for (const hostIP of hostIPs) {
+        for (const port of ports) {
+            for (const path of paths) {
+                scanPromises.push(
+                    (async () => {
+                        try {
+                            const resp = await fetchWithTimeout(`http://${hostIP}:${port}${path}`, {}, 500);
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                if (data.aircraft !== undefined || data.messages !== undefined) {
+                                    return {
+                                        ip: hostIP,
+                                        port,
+                                        type: 'piaware-host',
+                                        url: `http://${hostIP}:${port}`,
+                                        path: path,
+                                        aircraftCount: data.aircraft?.length || 0
+                                    };
+                                }
+                            }
+                        } catch (e) {}
+                        return null;
+                    })()
+                );
+            }
         }
     }
     
-    // Also check localhost
-    try {
-        const fs = require('fs');
-        if (fs.existsSync('/run/dump1090-fa/aircraft.json')) {
-            devices.push({
-                ip: 'localhost',
-                port: 'file',
-                type: 'piaware-local',
-                path: '/run/dump1090-fa/aircraft.json'
-            });
-        }
-    } catch (e) {}
+    const results = await Promise.all(scanPromises);
     
-    return devices;
+    // Filter nulls and deduplicate by URL
+    const seen = new Set();
+    return results.filter(d => {
+        if (!d) return false;
+        const key = d.url + d.path;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 //=============================================================================

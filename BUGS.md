@@ -30,10 +30,11 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 
 ## Setup Wizard Bugs
 
-### 3. Address geocoding not working
+### 3. Address geocoding not working (FIXED)
 **Symptom:** "Use My Location" fails, manual address doesn't get lat/lon  
 **Cause:** Geolocation API requires HTTPS; no geocoding API for manual entry  
-**Fix:** Add Nominatim or similar geocoding API for address lookup
+**Fix:** Added Nominatim forward geocoding on address input, plus autocomplete suggestions
+**Status:** Fixed - type address to get suggestions and auto-fill coordinates
 
 ### 4. Discovered Shelly devices not saved to config (FIXED)
 **Symptom:** Discovery finds 3 devices, config shows empty array  
@@ -53,20 +54,23 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 **Fix:** Check Gen2/Gen3 RPC API first, then Gen1 API
 **Status:** Fixed - Gen2 and Gen3 devices now discovered
 
-### 7. PiAware auto-discovery fails
+### 7. PiAware auto-discovery fails (FIXED)
 **Symptom:** PiAware on same Pi not detected  
 **Cause:** Docker container can't reach localhost; code reads filesystem path  
-**Fix:** Scan host IP (not localhost), or detect host.docker.internal
+**Fix:** Added host.docker.internal and gateway IP (172.17.0.1) scanning for Docker containers
+**Status:** Fixed - discovers PiAware from both network and Docker host
 
-### 8. PiAware URL path incorrect
+### 8. PiAware URL path incorrect (FIXED)
 **Symptom:** aircraft.json not found  
 **Cause:** Uses `/data/aircraft.json` but lighttpd serves `/skyaware/data/aircraft.json`  
-**Fix:** Update default path to `/skyaware/data/aircraft.json`
+**Fix:** Discovery now checks multiple paths: /skyaware/data/, /data/, /dump1090/data/
+**Status:** Fixed - tries all common PiAware URL paths
 
-### 9. Discovery hangs/slow
+### 9. Discovery hangs/slow (FIXED)
 **Symptom:** Scanning 254 IPs takes very long  
 **Cause:** Sequential scanning with no progress indicator  
-**Fix:** Parallel scanning with timeout, show progress
+**Fix:** Parallel scanning with Promise.all for all device types
+**Status:** Fixed - all 254 IPs scanned concurrently
 
 ---
 
@@ -83,10 +87,11 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 **Cause:** Dashboard called `/api/shelly?action=status`, API serves `/api/shelly/status`  
 **Status:** Fixed by updating dashboard JS
 
-### 12. "Local" PiAware source doesn't work in Docker
+### 12. "Local" PiAware source doesn't work in Docker (FIXED)
 **Symptom:** `source: "local"` returns "Local PiAware not found"  
 **Cause:** API reads filesystem `/run/dump1090-fa/aircraft.json` not mounted in container  
-**Fix:** Either mount volume or make "local" use host IP URL
+**Fix:** Removed local filesystem check; now scans host IPs including Docker gateway
+**Status:** Fixed - uses HTTP API instead of filesystem
 
 ---
 
@@ -100,10 +105,10 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 **Symptom:** Room names not from config  
 **Status:** Fixed - rooms come from device config
 
-### 15. Settings icon not showing
+### 15. Settings icon not showing (FIXED)
 **Symptom:** Settings button in header has no visible icon  
 **Cause:** Missing image or CSS issue  
-**Status:** Needs investigation
+**Status:** Fixed - uses ⚙️ emoji (&#x2699;&#xFE0F;) which renders in all modern browsers
 
 ### 15b. Config overwritten on update (FIXED)
 **Symptom:** Device names and settings reset after system update  
@@ -130,9 +135,10 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 **Fix:** Remove the `version:` line from docker-compose.yml
 **Status:** Fixed - version line removed
 
-### 18. Ring auth CLI package changed
+### 18. Ring auth CLI package changed (FIXED)
 **Symptom:** Documentation shows wrong npm package  
-**Fix:** Update docs to use `npx -p ring-client-api ring-auth-cli`
+**Fix:** ring-setup.html correctly uses `npx -p ring-client-api ring-auth-cli`
+**Status:** Fixed - documentation has correct command
 
 ---
 
@@ -142,9 +148,10 @@ sudo systemctl enable lighttpd && sudo systemctl start lighttpd
 **Symptom:** `setup-tunnel.sh` not run during install  
 **Fix:** Add tunnel setup to install script or post-install instructions
 
-### 20. Address autocomplete
+### 20. Address autocomplete (FIXED)
 **Symptom:** No suggestions when typing address  
-**Fix:** Implement Nominatim API for address lookup
+**Fix:** Added Nominatim API autocomplete with debouncing - shows suggestions as you type
+**Status:** Fixed - type 3+ characters to see address suggestions
 
 ---
 
