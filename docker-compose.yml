@@ -62,6 +62,40 @@ services:
   #   networks:
   #     - nexus
 
+  # PiAware / ADS-B Flight Tracking (optional)
+  # Requires RTL-SDR USB dongle and FlightAware account
+  # To enable: docker compose --profile piaware up -d
+  piaware:
+    image: ghcr.io/sdr-enthusiasts/docker-piaware:latest
+    container_name: nexus-piaware
+    profiles:
+      - piaware
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - FEEDER_ID=${PIAWARE_FEEDER_ID:-}
+      - FEEDER_LAT=${PIAWARE_LAT:-}
+      - FEEDER_LON=${PIAWARE_LON:-}
+      - FEEDER_NAME=${PIAWARE_NAME:-NEXUS-Home}
+      - BEASTHOST=
+      - RECEIVER_TYPE=rtlsdr
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    ports:
+      - "8080:8080"    # SkyAware web interface
+      - "30003:30003"  # Raw data
+      - "30005:30005"  # Beast data
+    volumes:
+      - piaware-data:/var/cache/piaware
+    tmpfs:
+      - /run:exec,size=64M
+      - /var/log
+    restart: unless-stopped
+    networks:
+      - nexus
+
+volumes:
+  piaware-data:
+
 networks:
   nexus:
     driver: bridge
