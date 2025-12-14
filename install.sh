@@ -256,6 +256,7 @@ EOF
     
     # Create PiAware env file for configuration
     log_info "Creating PiAware configuration..."
+    mkdir -p "$NEXUS_DIR"
     cat > "$NEXUS_DIR/.env.piaware" << 'EOF'
 # PiAware Configuration
 # Edit these values and then run: cd /opt/nexus && docker compose --profile piaware up -d

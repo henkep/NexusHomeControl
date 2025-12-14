@@ -1290,7 +1290,7 @@
 
         <div class="grid">
             <!-- Ring Doorbell Camera -->
-            <div class="card ring-camera">
+            <div class="card ring-camera" id="ringCard">
                 <div class="card-header">
                     <span class="card-title">🚪 Front Door</span>
                     <span class="ring-status" id="ringStatus">Loading...</span>
@@ -1321,7 +1321,7 @@
             </div>
 
             <!-- Flight Tracker -->
-            <div class="card flight-tracker">
+            <div class="card flight-tracker" id="piawareCard">
                 <div class="card-header">
                     <span class="card-title">&#x2708;&#xFE0F; PiAware Radar</span>
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -3019,6 +3019,9 @@
                 const data = await response.json();
                 
                 if (data.success && data.snapshot) {
+                    // Show the card (in case it was hidden)
+                    document.getElementById('ringCard').style.display = '';
+                    
                     // Show snapshot
                     snapshotEl.src = `data:image/jpeg;base64,${data.snapshot}`;
                     snapshotEl.style.display = 'block';
@@ -3041,6 +3044,9 @@
                     
                     statusEl.textContent = data.stale ? 'Cached' : 'Live';
                     statusEl.classList.toggle('live', !data.stale);
+                } else if (data.error === 'Ring not configured') {
+                    // Hide the entire Ring card when not configured
+                    document.getElementById('ringCard').style.display = 'none';
                 } else {
                     // Show error but keep any existing snapshot
                     statusEl.textContent = data.error || 'Unavailable';
