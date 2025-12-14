@@ -236,7 +236,17 @@ install_piaware() {
     fi
     
     log_info "PiAware will run as a Docker container (more reliable)"
-    log_info "Requirements: RTL-SDR USB dongle + FlightAware account"
+    
+    # Check for RTL-SDR dongle
+    RTL_FOUND=false
+    if lsusb 2>/dev/null | grep -qi "rtl\|realtek.*2832\|realtek.*2838"; then
+        RTL_FOUND=true
+        log_success "RTL-SDR dongle detected!"
+    else
+        log_warn "No RTL-SDR dongle detected"
+        log_info "PiAware will be configured but not started"
+        log_info "Plug in your RTL-SDR and run: cd /opt/nexus && docker compose --profile piaware up -d"
+    fi
     
     # Blacklist RTL-SDR kernel modules so Docker can access the device
     log_info "Blacklisting RTL-SDR kernel modules..."
@@ -259,7 +269,7 @@ EOF
     mkdir -p "$NEXUS_DIR"
     cat > "$NEXUS_DIR/.env.piaware" << 'EOF'
 # PiAware Configuration
-# Edit these values and then run: cd /opt/nexus && docker compose --profile piaware up -d
+# These settings can also be configured in the NEXUS dashboard under Settings > PiAware
 
 # Your FlightAware Feeder ID (get from https://flightaware.com/adsb/piaware/claim)
 PIAWARE_FEEDER_ID=
@@ -276,13 +286,12 @@ TZ=America/New_York
 EOF
     
     log_success "PiAware Docker configuration created"
-    log_info ""
-    log_info "To enable PiAware:"
-    log_info "  1. Plug in your RTL-SDR USB dongle"
-    log_info "  2. Edit /opt/nexus/.env.piaware with your FlightAware details"
-    log_info "  3. Run: cd /opt/nexus && docker compose --profile piaware up -d"
-    log_info "  4. Access SkyAware at: http://$IP_ADDRESS:8080"
-    log_info ""
+    
+    # If RTL-SDR found, we'll start PiAware after NEXUS is running
+    if [ "$RTL_FOUND" = true ]; then
+        # Set flag to start PiAware later
+        touch /tmp/nexus_start_piaware
+    fi
 }
 
 configure_piaware() {
@@ -401,6 +410,19 @@ EOF
     systemctl enable nexus.service
     
     log_success "NEXUS will start automatically on boot"
+    
+    # Start PiAware if RTL-SDR was detected
+    if [ -f /tmp/nexus_start_piaware ]; then
+        log_info "Starting PiAware (RTL-SDR detected)..."
+        docker compose --profile piaware up -d
+        rm -f /tmp/nexus_start_piaware
+        
+        if docker compose ps | grep -q "piaware"; then
+            log_success "PiAware is running! Access SkyAware at http://$IP_ADDRESS:8080"
+        else
+            log_warn "PiAware container started - check logs if issues"
+        fi
+    fi
 }
 
 # ============================================

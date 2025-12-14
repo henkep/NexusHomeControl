@@ -55,17 +55,31 @@ async function discoverShelly() {
         scanPromises.push(
             (async () => {
                 try {
-                    // Try Shelly Gen2 API first
+                    // Try Shelly Gen2/Gen3 API first
                     const resp = await fetchWithTimeout(`http://${ip}/rpc/Shelly.GetDeviceInfo`, {}, 1000);
                     if (resp.ok) {
                         const data = await resp.json();
+                        
+                        // Try to get user-configured name from device config
+                        let userName = null;
+                        try {
+                            const configResp = await fetchWithTimeout(`http://${ip}/rpc/Sys.GetConfig`, {}, 1000);
+                            if (configResp.ok) {
+                                const configData = await configResp.json();
+                                userName = configData.device?.name;
+                            }
+                        } catch (e) {}
+                        
+                        // Determine gen (Gen3 has gen: 3 in response)
+                        const gen = data.gen || 2;
+                        
                         return {
                             ip,
                             id: data.id,
                             mac: data.mac,
                             model: data.model,
-                            name: data.name || data.id,
-                            gen: 2,
+                            name: userName || data.name || data.id,
+                            gen: gen,
                             type: detectShellyType(data.model)
                         };
                     }
@@ -76,12 +90,23 @@ async function discoverShelly() {
                     const resp = await fetchWithTimeout(`http://${ip}/shelly`, {}, 1000);
                     if (resp.ok) {
                         const data = await resp.json();
+                        
+                        // Gen1: Try to get name from /settings
+                        let userName = null;
+                        try {
+                            const settingsResp = await fetchWithTimeout(`http://${ip}/settings`, {}, 1000);
+                            if (settingsResp.ok) {
+                                const settings = await settingsResp.json();
+                                userName = settings.name;
+                            }
+                        } catch (e) {}
+                        
                         return {
                             ip,
                             id: data.id,
                             mac: data.mac,
                             model: data.type,
-                            name: data.id,
+                            name: userName || data.id,
                             gen: 1,
                             type: detectShellyType(data.type)
                         };

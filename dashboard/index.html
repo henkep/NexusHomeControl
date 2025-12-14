@@ -1070,6 +1070,7 @@
                 <button class="settings-tab active" onclick="showSettingsTab('shelly')">💡 Shelly</button>
                 <button class="settings-tab" onclick="showSettingsTab('honeywell')">🌡️ Thermostats</button>
                 <button class="settings-tab" onclick="showSettingsTab('ring')">🚪 Ring</button>
+                <button class="settings-tab" onclick="showSettingsTab('piaware')">✈️ PiAware</button>
                 <button class="settings-tab" onclick="showSettingsTab('other')">⚙️ System</button>
             </div>
             
@@ -1213,6 +1214,68 @@
                 <div class="settings-section">
                     <h3>Connection Status</h3>
                     <div id="ringStatus">Checking...</div>
+                </div>
+            </div>
+            
+            <!-- PiAware Tab -->
+            <div class="settings-tab-content" id="tab-piaware">
+                <div class="settings-section">
+                    <h3>✈️ PiAware Status</h3>
+                    <div id="piawareStatus" style="margin-bottom: 15px;">
+                        <span style="color: var(--text-dim);">Checking...</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="startPiaware()">▶️ Start PiAware</button>
+                        <button class="btn" onclick="stopPiaware()">⏹️ Stop PiAware</button>
+                        <button class="btn" onclick="checkPiawareStatus()">🔄 Refresh</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>📡 RTL-SDR Dongle</h3>
+                    <div id="rtlsdrStatus" style="margin-bottom: 15px;">
+                        <span style="color: var(--text-dim);">Checking...</span>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>⚙️ FlightAware Configuration</h3>
+                    <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 15px;">
+                        Configure your FlightAware account to feed flight data and get a free Enterprise account.
+                        <a href="https://flightaware.com/adsb/piaware/claim" target="_blank" style="color: var(--accent-blue);">Claim your feeder →</a>
+                    </p>
+                    
+                    <div class="form-group">
+                        <label>Feeder ID</label>
+                        <input type="text" id="piawareFeederID" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow); border-radius: 5px; color: var(--text-primary);">
+                        <small style="color: var(--text-dim);">Get this from your FlightAware account after claiming</small>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Feeder Name</label>
+                        <input type="text" id="piawareFeederName" placeholder="NEXUS-Home" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow); border-radius: 5px; color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Latitude</label>
+                            <input type="text" id="piawareLat" placeholder="35.7796" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow); border-radius: 5px; color: var(--text-primary);">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Longitude</label>
+                            <input type="text" id="piawareLon" placeholder="-78.6382" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow); border-radius: 5px; color: var(--text-primary);">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" style="margin-top: 15px;" onclick="savePiawareSettings()">💾 Save PiAware Settings</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>🔗 Quick Links</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="//:8080" target="_blank" class="btn" id="skyawareLink">🗺️ Open SkyAware Map</a>
+                        <a href="https://flightaware.com/adsb/stats" target="_blank" class="btn">📊 My FlightAware Stats</a>
+                    </div>
                 </div>
             </div>
             
@@ -1608,6 +1671,7 @@
             await loadAllDevices();
             await loadCredentialStatus();
             loadSystemInfo();
+            checkPiawareStatus();
             resetUpdateUI(); // Reset any previous update state
         }
         
@@ -2064,6 +2128,116 @@
                 
                 if (response.ok) {
                     showStatus('Snapshot interval updated', 'success');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+        
+        // ============================================
+        // PIAWARE SETTINGS
+        // ============================================
+        
+        async function checkPiawareStatus() {
+            const statusEl = document.getElementById('piawareStatus');
+            const rtlEl = document.getElementById('rtlsdrStatus');
+            
+            try {
+                const response = await fetch('/api/piaware/status');
+                const data = await response.json();
+                
+                if (data.running) {
+                    statusEl.innerHTML = '<span style="color: var(--accent-green);">✓ Running</span>';
+                    // Update SkyAware link with correct host
+                    document.getElementById('skyawareLink').href = `http://${window.location.hostname}:8080`;
+                } else if (data.exists) {
+                    statusEl.innerHTML = '<span style="color: var(--accent-yellow);">⏸️ Stopped</span>';
+                } else {
+                    statusEl.innerHTML = '<span style="color: var(--text-dim);">Not configured</span>';
+                }
+                
+                if (data.rtlsdr) {
+                    rtlEl.innerHTML = '<span style="color: var(--accent-green);">✓ RTL-SDR dongle detected</span>';
+                } else {
+                    rtlEl.innerHTML = '<span style="color: var(--accent-yellow);">⚠️ No RTL-SDR dongle found - plug in your USB receiver</span>';
+                }
+                
+                // Load saved settings
+                if (data.config) {
+                    document.getElementById('piawareFeederID').value = data.config.feederId || '';
+                    document.getElementById('piawareFeederName').value = data.config.feederName || 'NEXUS-Home';
+                    document.getElementById('piawareLat').value = data.config.lat || '';
+                    document.getElementById('piawareLon').value = data.config.lon || '';
+                }
+            } catch (err) {
+                statusEl.innerHTML = '<span style="color: var(--accent-red);">✗ Error checking status</span>';
+                rtlEl.innerHTML = '<span style="color: var(--text-dim);">Unknown</span>';
+            }
+        }
+        
+        async function startPiaware() {
+            const statusEl = document.getElementById('piawareStatus');
+            statusEl.innerHTML = '<span style="color: var(--text-dim);">Starting...</span>';
+            
+            try {
+                const response = await fetch('/api/piaware/start', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('PiAware started!', 'success');
+                    setTimeout(checkPiawareStatus, 3000);
+                } else {
+                    showStatus(data.error || 'Failed to start PiAware', 'error');
+                    checkPiawareStatus();
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+                checkPiawareStatus();
+            }
+        }
+        
+        async function stopPiaware() {
+            const statusEl = document.getElementById('piawareStatus');
+            statusEl.innerHTML = '<span style="color: var(--text-dim);">Stopping...</span>';
+            
+            try {
+                const response = await fetch('/api/piaware/stop', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('PiAware stopped', 'success');
+                    setTimeout(checkPiawareStatus, 2000);
+                } else {
+                    showStatus(data.error || 'Failed to stop PiAware', 'error');
+                    checkPiawareStatus();
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+                checkPiawareStatus();
+            }
+        }
+        
+        async function savePiawareSettings() {
+            const settings = {
+                feederId: document.getElementById('piawareFeederID').value.trim(),
+                feederName: document.getElementById('piawareFeederName').value.trim() || 'NEXUS-Home',
+                lat: document.getElementById('piawareLat').value.trim(),
+                lon: document.getElementById('piawareLon').value.trim()
+            };
+            
+            try {
+                const response = await fetch('/api/piaware/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('PiAware settings saved! Restart PiAware to apply changes.', 'success');
+                } else {
+                    showStatus(data.error || 'Failed to save settings', 'error');
                 }
             } catch (err) {
                 showStatus(`Error: ${err.message}`, 'error');

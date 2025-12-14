@@ -832,6 +832,123 @@ app.get('/api/aircraft', async (req, res) => {
 });
 
 //=============================================================================
+// PIAWARE MANAGEMENT
+//=============================================================================
+
+// Check PiAware status
+app.get('/api/piaware/status', async (req, res) => {
+    try {
+        const { execSync } = require('child_process');
+        
+        // Check if PiAware container is running
+        let running = false;
+        let exists = false;
+        try {
+            const ps = execSync('docker ps -a --format "{{.Names}} {{.Status}}" 2>/dev/null', { encoding: 'utf8' });
+            if (ps.includes('nexus-piaware')) {
+                exists = true;
+                running = ps.includes('nexus-piaware') && ps.split('\n').find(l => l.includes('nexus-piaware'))?.includes('Up');
+            }
+        } catch (e) {}
+        
+        // Check for RTL-SDR dongle
+        let rtlsdr = false;
+        try {
+            const lsusb = execSync('lsusb 2>/dev/null', { encoding: 'utf8' });
+            rtlsdr = /rtl|realtek.*283[28]/i.test(lsusb);
+        } catch (e) {}
+        
+        // Read saved config
+        let piawareConfig = {};
+        const envPath = '/opt/nexus/.env.piaware';
+        if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            const feederId = envContent.match(/PIAWARE_FEEDER_ID=(.*)/)?.[1]?.trim();
+            const feederName = envContent.match(/PIAWARE_NAME=(.*)/)?.[1]?.trim();
+            const lat = envContent.match(/PIAWARE_LAT=(.*)/)?.[1]?.trim();
+            const lon = envContent.match(/PIAWARE_LON=(.*)/)?.[1]?.trim();
+            piawareConfig = { feederId, feederName, lat, lon };
+        }
+        
+        res.json({ running, exists, rtlsdr, config: piawareConfig });
+    } catch (err) {
+        res.json({ error: err.message });
+    }
+});
+
+// Start PiAware container
+app.post('/api/piaware/start', async (req, res) => {
+    try {
+        const { exec } = require('child_process');
+        
+        exec('cd /opt/nexus && docker compose --profile piaware up -d', (error, stdout, stderr) => {
+            if (error) {
+                console.error('PiAware start error:', error);
+                return res.json({ success: false, error: stderr || error.message });
+            }
+            res.json({ success: true });
+        });
+    } catch (err) {
+        res.json({ success: false, error: err.message });
+    }
+});
+
+// Stop PiAware container
+app.post('/api/piaware/stop', async (req, res) => {
+    try {
+        const { exec } = require('child_process');
+        
+        exec('cd /opt/nexus && docker compose --profile piaware down', (error, stdout, stderr) => {
+            if (error) {
+                console.error('PiAware stop error:', error);
+                return res.json({ success: false, error: stderr || error.message });
+            }
+            res.json({ success: true });
+        });
+    } catch (err) {
+        res.json({ success: false, error: err.message });
+    }
+});
+
+// Save PiAware settings
+app.post('/api/piaware/settings', async (req, res) => {
+    try {
+        const { feederId, feederName, lat, lon } = req.body;
+        
+        const envContent = `# PiAware Configuration
+# These settings can also be configured in the NEXUS dashboard under Settings > PiAware
+
+# Your FlightAware Feeder ID (get from https://flightaware.com/adsb/piaware/claim)
+PIAWARE_FEEDER_ID=${feederId || ''}
+
+# Your location (decimal degrees)
+PIAWARE_LAT=${lat || ''}
+PIAWARE_LON=${lon || ''}
+
+# Feeder name (shows on FlightAware)
+PIAWARE_NAME=${feederName || 'NEXUS-Home'}
+
+# Timezone
+TZ=America/New_York
+`;
+        
+        fs.writeFileSync('/opt/nexus/.env.piaware', envContent);
+        
+        // Also save to main config
+        config.piaware = config.piaware || {};
+        config.piaware.feederId = feederId;
+        config.piaware.feederName = feederName;
+        config.piaware.lat = lat;
+        config.piaware.lon = lon;
+        saveConfig();
+        
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false, error: err.message });
+    }
+});
+
+//=============================================================================
 // HONEYWELL TCC
 //=============================================================================
 
